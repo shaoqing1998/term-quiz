@@ -693,6 +693,8 @@ class LibraryPage:
         self.history = load_history()
         self._links: list[dict[str, Any]] = []
         self._popover = None
+        self._current_word = None
+        self._rel: list = []
 
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
 
@@ -758,6 +760,8 @@ class LibraryPage:
         self.toolbar.set_margin_bottom(2)
 
         self.title_label = Gtk.Label(xalign=0)
+        self.title_label.set_ellipsize(3)
+        self.title_label.set_max_width_chars(28)
         self.title_label.set_markup("<span size='xx-large' weight='bold'></span>")
         self.toolbar.pack_start(self.title_label, False, False, 0)
 
@@ -806,6 +810,7 @@ class LibraryPage:
         for row in self.list.get_children():
             self.list.remove(row)
 
+        self.history = load_history()
         q = normalize(self.search.get_text())
         per_term: dict[str, list[int]] = defaultdict(lambda: [0, 0])
         for r in self.history:
@@ -821,6 +826,7 @@ class LibraryPage:
                 continue
             row = Gtk.ListBoxRow()
             row.term_index = idx
+            row.term = w["term"]
             inner = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
             inner.set_margin_start(14)
             inner.set_margin_end(14)
@@ -848,14 +854,28 @@ class LibraryPage:
             shown += 1
 
         self.count_label.set_text(f"共 {len(self.db.get('words') or [])} 条，显示 {shown} 条")
-        first = self.list.get_row_at_index(0)
-        if first:
-            self.list.select_row(first)
+
+        keep = getattr(self, "_current_word", None)
+        keep_term = keep["term"] if keep else None
+        target = None
+        if keep_term:
+            for r in self.list.get_children():
+                if getattr(r, "term", None) == keep_term:
+                    target = r
+                    break
+        target = target or self.list.get_row_at_index(0)
+        if target:
+            self.list.select_row(target)
         else:
             self.show_empty()
 
     def show_empty(self) -> None:
         self.buf.set_text("没有匹配的术语。")
+        self._links = []
+        self._rel = []
+        self._current_word = None
+        self.title_label.set_markup("<span size='xx-large' weight='bold'>—</span>")
+        self.mcq_btn.hide()
 
     def on_select(self, _lb, row) -> None:
         if row is None:
@@ -864,6 +884,13 @@ class LibraryPage:
 
     # ---------------- 详情 ----------------
     def show_detail(self, w: dict[str, Any]) -> None:
+        self._current_word = w
+        if self._popover is not None:
+            try:
+                self._popover.popdown()
+            except Exception:
+                pass
+            self._popover = None
         b = self.buf
         b.set_text("")
         self._links = []
@@ -1170,13 +1197,10 @@ class QuizPage:
         title.set_markup("<span size='xx-large' weight='bold'>开始一组练习</span>")
         box.pack_start(title, False, False, 0)
 
-        ok, total = overall(load_history())
-        hint = label(
-            f"历史：共 {total} 题，正确 {ok} 题" + (f"，正确率 {int(round(ok / total * 100))}%" if total else ""),
-            False, xalign=0.5,
-        )
-        hint.get_style_context().add_class("muted")
-        box.pack_start(hint, False, False, 0)
+        self.start_hint = label("", False, xalign=0.5)
+        self.start_hint.get_style_context().add_class("muted")
+        box.pack_start(self.start_hint, False, False, 0)
+        self.refresh_start_hint()
 
         # 题型
         kinds_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
@@ -1221,6 +1245,16 @@ class QuizPage:
         return box
 
     # --- 答题页
+    def refresh_start_hint(self) -> None:
+        ok, total = overall(load_history())
+        text = f"历史：共 {total} 题，正确 {ok} 题"
+        if total:
+            text += f"，正确率 {int(round(ok / total * 100))}%"
+        else:
+            text += "，还没开始"
+        if hasattr(self, "start_hint"):
+            self.start_hint.set_text(text)
+
     def build_question(self):
         from gi.repository import Gtk
 
@@ -1743,11 +1777,19 @@ class MainWindow:
     def _on_stack_changed(self, stack, _pspec) -> None:
         if self._syncing_nav:
             return
-        row = self._nav_rows.get(stack.get_visible_child_name())
+        name = stack.get_visible_child_name()
+        row = self._nav_rows.get(name)
         if row is not None:
             self._syncing_nav = True
             self._nav.select_row(row)
             self._syncing_nav = False
+        if name == "library":
+            self.library.db = load_db()
+            self.library.refresh_list()
+        elif name == "stats":
+            self.stats.refresh()
+        elif name == "quiz":
+            self.quiz.refresh_start_hint()
 
     def show_all(self) -> None:
         self.window.show_all()
