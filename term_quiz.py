@@ -53,6 +53,7 @@ def words_path() -> Path:
 APP_ID = "io.github.termquiz"
 APP_NAME = "术语训练"
 LOG_PATH = USER_DIR / "app.log"
+BAIKE_CACHE = USER_DIR / "baike_cache.json"
 
 
 def log(msg: str) -> None:
@@ -684,6 +685,182 @@ def label(text: str = "", markup: bool = False, **kw) -> "Any":
     return lb
 
 
+# ---------------------------------------------------------------- 百度百科内嵌
+
+JS_EXTRACT = r"""
+(function () {
+  var sel = ['.lemma-summary', '[data-module="lemmaSummary"]', '.J-summary'];
+  var s = '';
+  for (var i = 0; i < sel.length; i++) {
+    var e = document.querySelector(sel[i]);
+    if (e) { s = e.innerText; break; }
+  }
+  if (!s && document.body) { s = document.body.innerText; }
+  s = (s || '').replace(/\n{3,}/g, '\n\n').trim();
+  return JSON.stringify({title: document.title, text: s.slice(0, 6000)});
+})()
+"""
+
+
+def load_baike_cache() -> dict:
+    try:
+        return json.loads(BAIKE_CACHE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def save_baike_cache(data: dict) -> None:
+    try:
+        BAIKE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        BAIKE_CACHE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+class BaikeDialog:
+    """在应用内显示百度百科正文（文字，不是网页）。"""
+
+    def __init__(self, parent, term: str, en_full: str):
+        from gi.repository import Gtk
+        self.term = term
+        self.en_full = en_full
+        self.url = "https://baike.baidu.com/search/word?word=" + en_full.replace(" ", "+")
+        self.web = None
+        self._done = False
+
+        self.dlg = Gtk.Dialog(title=f"百度百科 · {term}", transient_for=parent, flags=0)
+        self.dlg.set_default_size(920, 720)
+        self.dlg.add_button("刷新", 1)
+        self.dlg.add_button("用浏览器打开", 2)
+        self.dlg.add_button("关闭", Gtk.ResponseType.CLOSE)
+
+        area = self.dlg.get_content_area()
+        self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        area.pack_start(self.stack, True, True, 0)
+
+        # loading
+        load_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        load_box.set_valign(Gtk.Align.CENTER)
+        sp = Gtk.Spinner()
+        sp.start()
+        load_box.pack_start(sp, False, False, 0)
+        load_box.pack_start(Gtk.Label(label="正在获取百度百科正文…"), False, False, 0)
+        self.stack.add_named(load_box, "loading")
+
+        # text
+        self.view = Gtk.TextView()
+        self.view.set_editable(False)
+        self.view.set_cursor_visible(False)
+        self.view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.view.set_left_margin(24)
+        self.view.set_right_margin(24)
+        self.view.set_top_margin(18)
+        self.view.set_bottom_margin(18)
+        self.view.get_style_context().add_class("detail-view")
+        self.buf = self.view.get_buffer()
+        from gi.repository import Pango
+        self.buf.create_tag("term", size=18 * Pango.SCALE, weight=Pango.Weight.BOLD)
+        self.buf.create_tag("body", size=11 * Pango.SCALE)
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        sw.get_style_context().add_class("plain-list")
+        sw.add(self.view)
+        self.stack.add_named(sw, "text")
+
+        # error
+        err_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        err_box.set_valign(Gtk.Align.CENTER)
+        self.err_label = Gtk.Label(label="")
+        self.err_label.set_line_wrap(True)
+        err_box.pack_start(self.err_label, False, False, 0)
+        self.stack.add_named(err_box, "error")
+
+        # 隐藏的 WebView（需要在窗口里才能渲染）
+        try:
+            import gi
+            gi.require_version("WebKit2", "4.1")
+            from gi.repository import WebKit2
+            self.web = WebKit2.WebView()
+            self.web.set_size_request(1, 1)
+            self.web.set_no_show_all(True)
+            area.pack_start(self.web, False, False, 0)
+            self.web.connect("load-changed", self._on_load)
+            self.web.connect("load-failed", self._on_fail)
+        except Exception:
+            self.web = None
+            self._fail("系统里没有 WebKitGTK，无法抓取正文。\n可以改用「用浏览器打开」。")
+
+        self.dlg.show_all()
+        self.web and self.web.hide()
+        self.dlg.connect("response", self._on_response)
+
+    # ---- 加载流程
+    def start(self, force: bool = False) -> None:
+        cache = load_baike_cache()
+        item = cache.get(self.term)
+        if item and not force:
+            self._show_text(item.get("title", self.term), item.get("text", ""))
+            return
+        self.stack.set_visible_child_name("loading")
+        if self.web is None:
+            return
+        self._done = False
+        self.web.load_uri(self.url)
+
+    def _on_load(self, view, ev):
+        from gi.repository import WebKit2, GLib
+        if ev != WebKit2.LoadEvent.FINISHED or self._done:
+            return
+        self._done = True
+        GLib.timeout_add(1200, lambda: (view.run_javascript(JS_EXTRACT, None, self._on_js, None), False)[1])
+
+    def _on_js(self, view, res, _data):
+        try:
+            val = view.run_javascript_finish(res).get_js_value().to_string()
+            info = json.loads(val)
+        except Exception as e:
+            self._fail(f"解析失败：{e}")
+            return
+        text = (info.get("text") or "").strip()
+        title = (info.get("title") or self.term).strip()
+        if len(text) < 40:
+            self._fail("百度返回的内容无法识别（可能触发了验证页）。")
+            return
+        cache = load_baike_cache()
+        cache[self.term] = {"title": title, "text": text,
+                            "ts": datetime.now(TZ).isoformat(timespec="seconds")}
+        save_baike_cache(cache)
+        self._show_text(title, text)
+
+    def _on_fail(self, view, ev, uri, err):
+        self._fail(f"加载失败：{err.message}")
+        return False
+
+    def _fail(self, msg: str) -> None:
+        self.err_label.set_text(msg + "\n\n可以用「用浏览器打开」查看原文。")
+        self.stack.set_visible_child_name("error")
+
+    def _show_text(self, title: str, text: str) -> None:
+        b = self.buf
+        b.set_text("")
+        b.insert_with_tags_by_name(b.get_end_iter(), title + "\n", "term")
+        b.insert_with_tags_by_name(b.get_end_iter(), "\n" + text, "body")
+        self.stack.set_visible_child_name("text")
+
+    def _on_response(self, dlg, resp):
+        if resp == 1:
+            self.start(force=True)
+        elif resp == 2:
+            from gi.repository import Gtk
+            Gtk.show_uri_on_window(dlg, self.url, Gtk.get_current_event_time())
+        else:
+            dlg.destroy()
+
+    def run(self):
+        self.start()
+        self.dlg.run()
+
 class LibraryPage:
     def __init__(self, win):
         from gi.repository import Gtk
@@ -965,66 +1142,7 @@ class LibraryPage:
 
     # ---------------- 内嵌维基百科 ----------------
     def open_wiki(self, term: str, en_full: str) -> None:
-        from urllib.parse import quote
-        from gi.repository import Gtk
-
-        zh = "https://baike.baidu.com/search/word?word=" + quote(en_full or term)
-        en = zh
-
-        dlg = Gtk.Dialog(title=f"百度百科 · {term}",
-                         transient_for=self.win.window, flags=0)
-        dlg.set_default_size(980, 720)
-        dlg.add_button("关闭", Gtk.ResponseType.CLOSE)
-        area = dlg.get_content_area()
-
-        view = None
-        try:
-            import gi
-            gi.require_version("WebKit2", "4.1")
-            from gi.repository import WebKit2
-            view = WebKit2.WebView()
-        except Exception:
-            view = None
-
-        bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        bar.set_margin_start(10)
-        bar.set_margin_end(10)
-        bar.set_margin_top(8)
-        bar.set_margin_bottom(6)
-
-        if view is not None:
-            b_zh = Gtk.Button(label="重新加载")
-            b_br = Gtk.Button(label="用浏览器打开")
-            b_zh.connect("clicked", lambda *_: view.load_uri(zh))
-            b_br.connect("clicked", lambda *_: Gtk.show_uri_on_window(
-                dlg, zh, Gtk.get_current_event_time()))
-            for b in (b_zh, b_br):
-                bar.pack_start(b, False, False, 0)
-            area.pack_start(bar, False, False, 0)
-            area.pack_start(view, True, True, 0)
-            view.load_uri(zh)
-
-            def _failed(_v, _ev, uri, err):
-                self.win.toast("百度百科加载失败，可能没有网络")
-                return False
-
-            view.connect("load-failed", _failed)
-        else:
-            info = Gtk.Label(xalign=0)
-            info.set_line_wrap(True)
-            info.set_margin_start(18)
-            info.set_margin_end(18)
-            info.set_margin_top(18)
-            info.set_text(
-                "系统里没有 WebKitGTK，无法内嵌网页。\n\n"
-                f"可以手动打开：\n{zh}\n\n"
-                "安装内嵌组件：\nsudo apt install gir1.2-webkit2-4.1"
-            )
-            area.pack_start(info, True, True, 0)
-
-        dlg.show_all()
-        dlg.run()
-        dlg.destroy()
+        BaikeDialog(self.win.window, term, en_full).run()
 
     # ---------------- 点词弹气泡 ----------------
     def on_detail_press(self, tv, event):
