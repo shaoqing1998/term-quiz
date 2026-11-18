@@ -1,6 +1,9 @@
 {
   "settings": {
-    "work_hours": [9, 19],
+    "work_hours": [
+      9,
+      19
+    ],
     "weekdays_only": true,
     "notify_expire_ms": 22000
   },
@@ -8,9 +11,18 @@
     {
       "term": "POC",
       "en_full": "Proof of Concept",
-      "en_aliases": ["proof-of-concept", "proof of concept"],
+      "en_aliases": [
+        "proof-of-concept",
+        "proof of concept"
+      ],
       "zh": "概念验证 / 样机验证",
-      "zh_aliases": ["概念验证", "样机验证", "可行性验证", "概念证实", "验证原型"],
+      "zh_aliases": [
+        "概念验证",
+        "样机验证",
+        "可行性验证",
+        "概念证实",
+        "验证原型"
+      ],
       "pronounce": "/pruːf əv ˈkɒnsept/（美音 /pruːf əv ˈkɑːnsept/）",
       "pronounce_accept": [
         "/pruːf əv ˈkɒnsept/",
@@ -22,14 +34,23 @@
         "/pɔɪnt əv ˈkɒntækt/",
         "/pɔːt əv kɔːl/",
         "/piːs əv keɪk/"
-      ]
+      ],
+      "desc": "概念验证。先用最小成本做出一个能跑的原型，证明技术路线可行，再投入量产开发。\n\n在这个项目里，POC 阶段的目标是把 OPS 模块上的各个接口逐个点亮——触控、串口、HDMI、Wi-Fi/BT——确认硬件设计和 BSP 没走偏，而不是追求稳定性和完整功能。\n\n一个常见误区：POC 通过不等于能量产。POC 只验证「能工作」，量产还要过兼容性、老化、认证、良率、供应链几道关。"
     },
     {
       "term": "OPS",
       "en_full": "Open Pluggable Specification",
-      "en_aliases": ["open pluggable specification"],
+      "en_aliases": [
+        "open pluggable specification"
+      ],
       "zh": "开放可插拔规范（商显/白板用的可插拔计算盒）",
-      "zh_aliases": ["开放可插拔规范", "可插拔计算盒", "插拔式电脑", "OPS盒子", "开放即插规范"],
+      "zh_aliases": [
+        "开放可插拔规范",
+        "可插拔计算盒",
+        "插拔式电脑",
+        "OPS盒子",
+        "开放即插规范"
+      ],
       "pronounce": "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/（美音 /ˈoʊpən …/）",
       "pronounce_accept": [
         "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/",
@@ -40,7 +61,8 @@
         "/ˌɒpəˈreɪʃnz/",
         "/ˈəʊpən pəˈzɪʃnɪŋ ˈsɪstəm/",
         "/ˈɒptɪkl ˈpækɪt swɪtʃ/"
-      ]
+      ],
+      "desc": "开放可插拔规范，商显 / 交互白板（IWB）上计算模块的接口标准，2010 年由 Intel、NEC、微软牵头制定。\n\n它规定的是机械尺寸、80-pin 连接器的引脚定义、供电和散热，不限定 CPU 平台——Intel、AMD、瑞芯微、高通都有 OPS 方案。本项目用的是高通 QCM6490。\n\n在整机里，OPS 模块插进屏幕背面的 80-pin 槽：背面 I/O（触控 USB、串口、HDMI）经槽子转给整机，正面 I/O 是用户能摸到的 USB / 网口。\n\n容易混淆的一点：OPS 管「整机怎么插计算盒」；SMARC 管「盒子里面那块核心板」，两者是包含关系，不是并列关系。"
     },
     {
       "term": "SMARC",
@@ -70,7 +92,8 @@
         "/ˈsmaːs/",
         "/ˈsmɑːt ˈsɪrkɪt/",
         "/es em ˈɑːk/"
-      ]
+      ],
+      "desc": "智能移动架构（Smart Mobility ARChitecture），SGET 组织定义的核心板规范，主打小尺寸、低功耗。\n\n它规定核心板的尺寸、金手指引脚定义和散热结构，但 SoC 可以换——同一块载板能配不同厂商的 SMARC 模块，这也是它比整机定制灵活的地方。\n\n本项目的结构是：SMARC 核心板插在 OPS 载板上，载板再转出 80-pin 接口给整机。所以「SMARC 板 = 核心板」，「底板 = 载板」，四个叫法其实只有两种东西。\n\n和 OPS 的区别：OPS 管整机侧的可插拔计算盒，SMARC 管盒子内部的核心模组。"
     }
   ],
   "mcqs": [

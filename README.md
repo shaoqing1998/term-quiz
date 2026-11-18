@@ -57,7 +57,8 @@ curl -fsSL https://raw.githubusercontent.com/shaoqing1998/term-quiz/main/install
       "zh_aliases": ["概念验证", "样机验证"],
       "pronounce": "/pruːf əv ˈkɒnsept/",
       "pronounce_accept": ["/pruːf əv ˈkɒnsept/"],
-      "pronounce_choices": ["/pruːf əv ˈkɒnsept/", "/pɔɪnt əv kəˈtækt/"]
+      "pronounce_choices": ["/pruːf əv ˈkɒnsept/", "/pɔɪnt əv kəˈtækt/"],
+      "desc": "自由文本说明，显示在词条详情里（来历 / 用法 / 项目语境）"
     }
   ],
   "mcqs": [
