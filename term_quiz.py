@@ -101,6 +101,40 @@ def split_words(text: str) -> list[str]:
     return [w for w in (text or "").split() if w]
 
 
+# 多词短语：优先整体匹配，不再逐词拆
+PHRASES = {
+    "proof of": ("对……的验证", "proof of 是固定搭配，整体表示「对……的证明 / 验证」，一般不拆开逐字理解。"),
+    "point of contact": ("对接人", "项目里的联系人 / 对接人。"),
+    "plug and play": ("即插即用", "插上就能用，不需要额外配置驱动。"),
+}
+
+
+def segment_words(text: str) -> list[dict[str, Any]]:
+    """按「短语优先」切分，返回 [{text, zh, note}]。zh 为空表示没有解释。"""
+    toks = split_words(text)
+    out: list[dict[str, Any]] = []
+    i = 0
+    while i < len(toks):
+        hit = None
+        for n in (3, 2):
+            if i + n <= len(toks):
+                cand = " ".join(toks[i:i + n])
+                if cand.lower() in PHRASES:
+                    zh, note = PHRASES[cand.lower()]
+                    hit = (cand, zh, note, n)
+                    break
+        if hit:
+            cand, zh, note, n = hit
+            out.append({"text": cand, "zh": zh, "note": note})
+            i += n
+            continue
+        tok = toks[i]
+        zh, note = word_info(tok)
+        out.append({"text": tok, "zh": zh, "note": note})
+        i += 1
+    return out
+
+
 def word_info(token: str):
     """返回 (中文短义, 详细解释) 或 (None, None)。"""
     key = "".join(ch for ch in token.lower() if ch.isalpha() or ch == "-")
@@ -372,6 +406,9 @@ CSS = """
 .big-number { font-size: 26px; font-weight: 700; }
 .card { background-color: alpha(currentColor, 0.05); border-radius: 10px; padding: 14px; }
 .muted { opacity: 0.7; }
+        .detail-view, .detail-view text, .detail-view border {
+            background-color: transparent;
+        }
         .plain-list, .plain-list row, .plain-list viewport, .plain-list list {
             background-color: transparent;
         }
@@ -419,19 +456,18 @@ def label(text: str = "", markup: bool = False, **kw) -> "Any":
 
 
 class LibraryPage:
-    """题库：左侧搜索+列表，右侧详情。"""
-
     def __init__(self, win):
         from gi.repository import Gtk
 
         self.win = win
         self.db = load_db()
         self.history = load_history()
+        self._links: list[dict[str, Any]] = []
+        self._popover = None
 
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-        self._detail_text = ""
-        self._current_word = None
 
+        # ---------------- 左栏：搜索 + 列表 ----------------
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         left.set_size_request(340, -1)
 
@@ -464,27 +500,46 @@ class LibraryPage:
         left.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL), False, False, 0)
         left.pack_start(self.count_label, False, False, 0)
 
-        sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        # ---------------- 右栏：可自由选择的文本视图 ----------------
+        self.detail = Gtk.TextView()
+        self.detail.set_editable(False)
+        self.detail.set_cursor_visible(False)
+        self.detail.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.detail.set_left_margin(28)
+        self.detail.set_right_margin(24)
+        self.detail.set_top_margin(20)
+        self.detail.set_bottom_margin(20)
+        self.detail.get_style_context().add_class("detail-view")
+        self.detail.connect("button-release-event", self.on_detail_release)
+        self.buf = self.detail.get_buffer()
+        self._make_tags()
 
-        right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        right.set_margin_start(18)
-        right.set_margin_end(16)
-        right.set_margin_top(14)
-        right.set_margin_bottom(14)
-        self.detail = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        self.detail.connect("button-press-event", self.on_detail_press)
         sw2 = Gtk.ScrolledWindow()
         sw2.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        sw2.get_style_context().add_class("plain-list")
         sw2.add(self.detail)
-        right.pack_start(sw2, True, True, 0)
 
         self.box.pack_start(left, False, False, 0)
-        self.box.pack_start(sep, False, False, 0)
-        self.box.pack_start(right, True, True, 0)
+        self.box.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL), False, False, 0)
+        self.box.pack_start(sw2, True, True, 0)
 
         self.refresh_list()
 
-    # --- 列表
+    # ---------------- 文本标签 ----------------
+    def _make_tags(self) -> None:
+        from gi.repository import Pango
+        b = self.buf
+        b.create_tag("term", size=24 * Pango.SCALE, weight=Pango.Weight.BOLD)
+        b.create_tag("chip", size=9 * Pango.SCALE, foreground="#8a8a8a")
+        b.create_tag("section", size=9 * Pango.SCALE, weight=Pango.Weight.BOLD,
+                     foreground="#8a8a8a", pixels_above_lines=14, pixels_below_lines=3)
+        b.create_tag("body", size=11 * Pango.SCALE)
+        b.create_tag("muted", size=9 * Pango.SCALE, foreground="#8a8a8a")
+        b.create_tag("fullname", size=13 * Pango.SCALE, weight=Pango.Weight.BOLD)
+        b.create_tag("link", size=13 * Pango.SCALE, weight=Pango.Weight.BOLD,
+                     foreground="#1c71d8", underline=Pango.Underline.SINGLE)
+
+    # ---------------- 列表 ----------------
     def refresh_list(self) -> None:
         from gi.repository import Gtk
 
@@ -540,29 +595,25 @@ class LibraryPage:
             self.show_empty()
 
     def show_empty(self) -> None:
-        from gi.repository import Gtk
-
-        for c in self.detail.get_children():
-            self.detail.remove(c)
-        self.detail.pack_start(label("没有匹配的术语。", False), False, False, 0)
-        self.detail.show_all()
+        self.buf.set_text("没有匹配的术语。")
 
     def on_select(self, _lb, row) -> None:
         if row is None:
             return
-        w = self.db["words"][row.term_index]
-        self.show_detail(w)
+        self.show_detail(self.db["words"][row.term_index])
 
+    # ---------------- 详情 ----------------
     def show_detail(self, w: dict[str, Any]) -> None:
-        from gi.repository import Gtk
+        b = self.buf
+        b.set_text("")
+        self._links = []
 
-        self._current_word = w
-        for c in self.detail.get_children():
-            self.detail.remove(c)
-
-        title = label("", True)
-        title.set_markup(f"<span size='xx-large' weight='bold'>{pango_esc(w['term'])}</span>")
-        self.detail.pack_start(title, False, False, 0)
+        def ins(text: str, *tags: str) -> None:
+            end = b.get_end_iter()
+            if tags:
+                b.insert_with_tags_by_name(end, text, *tags)
+            else:
+                b.insert(end, text)
 
         ok, total = 0, 0
         for r in self.history:
@@ -570,113 +621,110 @@ class LibraryPage:
                 total += 1
                 if r.get("ok"):
                     ok += 1
+
+        ins(w["term"], "term")
         if total:
             pct = int(round(ok / total * 100))
-            chip = label("", True)
-            chip.set_markup(
-                f"<span size='small'>历史正确率 <b>{pct}%</b>（{ok}/{total}）</span>"
-            )
-            chip.get_style_context().add_class("muted")
-            self.detail.pack_start(chip, False, False, 0)
+            ins(f"\n历史正确率 {pct}%（{ok}/{total}）", "chip")
 
-        def section(head: str, body: str) -> None:
-            h = label("", True)
-            h.set_markup(f"<span weight='bold' size='small'>{pango_esc(head)}</span>")
-            h.get_style_context().add_class("muted")
-            self.detail.pack_start(h, False, False, 0)
-            self.detail.pack_start(label(body or "—", False), False, False, 0)
+        def sec(title: str) -> None:
+            ins("\n", "body")
+            ins(title, "section")
+            ins("\n", "body")
 
-        # ---- 英文全称：每个词可点，弹出气泡解释 ----
-        h = label("", True)
-        h.set_markup("<span weight='bold' size='small'>英文全称</span>")
-        h.get_style_context().add_class("muted")
-        self.detail.pack_start(h, False, False, 0)
-
-        sentence = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-        flow = Gtk.FlowBox()
-        flow.set_selection_mode(Gtk.SelectionMode.NONE)
-        flow.set_column_spacing(6)
-        flow.set_row_spacing(2)
-        flow.set_halign(Gtk.Align.START)
-        flow.set_valign(Gtk.Align.START)
-        flow.set_max_children_per_line(12)
-        for token in split_words(w.get("en_full", "")):
-            zh, note = word_info(token)
-            lb = label("", True)
-            lb.set_markup(f"<span size='large' weight='bold'>{pango_esc(token)}</span>")
-            if zh:
-                lb.get_style_context().add_class("word-link")
-                eb = Gtk.EventBox()
-                eb.add(lb)
-                eb.connect("button-press-event",
-                           lambda _w, _e, t=token, z=zh, n=note: self.pop_word(_w, t, z, n))
-                flow.add(eb)
+        # 英文全称（词可点）
+        sec("英文全称")
+        segs = segment_words(w.get("en_full", ""))
+        for i, seg in enumerate(segs):
+            start = b.get_char_count()
+            if seg["zh"]:
+                ins(seg["text"], "link")
+                self._links.append({"start": start, "end": b.get_char_count(), **seg})
             else:
-                flow.add(lb)
-        sentence.pack_start(flow, False, False, 0)
-        self.detail.pack_start(sentence, False, False, 0)
-        hint = label("点击彩色单词看解释", False)
-        hint.get_style_context().add_class("muted")
-        self.detail.pack_start(hint, False, False, 0)
+                ins(seg["text"], "fullname")
+            if i < len(segs) - 1:
+                ins(" ")
 
-        section("中文意思", w.get("zh", ""))
-        section("读法", w.get("pronounce", ""))
+        sec("中文意思")
+        ins(w.get("zh", "") or "—", "body")
+
+        if w.get("pronounce"):
+            sec("读法")
+            ins(w["pronounce"], "body")
+
         if w.get("en_aliases"):
-            section("英文别名", "、".join(w["en_aliases"]))
+            sec("英文别名")
+            ins("、".join(w["en_aliases"]), "body")
+
         if w.get("zh_aliases"):
-            section("中文别名", "、".join(w["zh_aliases"]))
+            sec("中文别名")
+            ins("、".join(w["zh_aliases"]), "body")
+
         if w.get("pronounce_choices"):
-            section("读音选项", "\n".join(f"· {c}" for c in w["pronounce_choices"]))
+            sec("读音选项")
+            for i, c in enumerate(w["pronounce_choices"]):
+                ins(("✔ " if i == 0 else "· ") + c, "body")
+                if i < len(w["pronounce_choices"]) - 1:
+                    ins("\n", "body")
 
         rel = [m for m in (self.db.get("mcqs") or [])
                if w["term"].lower() in json.dumps(m, ensure_ascii=False).lower()]
         if rel:
-            h2 = label("", True)
-            h2.set_markup("<span weight='bold' size='small'>相关题目</span>")
-            h2.get_style_context().add_class("muted")
-            self.detail.pack_start(h2, False, False, 0)
-            for m in rel:
-                box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-                box.get_style_context().add_class("card")
-                box.pack_start(label(m["prompt"], False), False, False, 0)
+            sec("相关题目")
+            for j, m in enumerate(rel):
+                ins(m["prompt"], "body")
+                ins("\n", "body")
                 for i, c in enumerate(m["choices"]):
-                    mark = "✔" if i == 0 else "·"
-                    box.pack_start(label(f"{mark} {c}", False), False, False, 0)
+                    ins(("✔ " if i == 0 else "· ") + c, "muted")
+                    ins("\n", "body")
                 if m.get("explain"):
-                    ex = label(m["explain"], False)
-                    ex.get_style_context().add_class("muted")
-                    box.pack_start(ex, False, False, 0)
-                self.detail.pack_start(box, False, False, 0)
+                    ins(m["explain"], "muted")
+                if j < len(rel) - 1:
+                    ins("\n\n", "body")
 
-        # 供「复制全部」使用
-        chunks = [w.get("term", ""), w.get("en_full", ""), w.get("zh", "")]
-        if w.get("en_aliases"):
-            chunks.append("英文别名：" + "、".join(w["en_aliases"]))
-        if w.get("zh_aliases"):
-            chunks.append("中文别名：" + "、".join(w["zh_aliases"]))
-        if w.get("pronounce"):
-            chunks.append("读法：" + w["pronounce"])
-        parts = []
-        for token in split_words(w.get("en_full", "")):
-            zh, note = word_info(token)
-            if zh:
-                parts.append(f"{token}（{zh}）：{note}")
-        if parts:
-            chunks.append("逐词解释：\n" + "\n".join(parts))
-        self._detail_text = "\n".join(x for x in chunks if x)
+        self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
 
-        self.detail.show_all()
+    # ---------------- 点词弹气泡 ----------------
+    def on_detail_release(self, tv, event):
+        from gi.repository import Gdk, Gtk
+        if event.button != 1:
+            return False
+        if tv.get_buffer().get_has_selection():
+            return False  # 正在拖选，不当点击处理
+        bx, by = tv.window_to_buffer_coords(Gtk.TextWindowType.WIDGET,
+                                            int(event.x), int(event.y))
+        it = tv.get_iter_at_location(bx, by)
+        off = it.get_offset()
+        for link in self._links:
+            if link["start"] <= off < link["end"]:
+                r = tv.get_iter_location(it)
+                wx, wy = tv.buffer_to_window_coords(Gtk.TextWindowType.WIDGET, r.x, r.y)
+                rect = Gdk.Rectangle()
+                rect.x, rect.y = wx, wy
+                rect.width, rect.height = max(r.width, 1), max(r.height, 1)
+                self.pop_word(tv, rect, link)
+                return True
+        return False
 
-    # ---- 单词气泡 ----
-    def pop_word(self, anchor, token: str, zh: str, note: str) -> bool:
+    def pop_word(self, anchor, rect, link) -> bool:
         from gi.repository import Gtk
+
+        old = self._popover
+        if old is not None:
+            try:
+                old.popdown()
+                old.destroy()
+            except Exception:
+                pass
+            self._popover = None
+
         pop = Gtk.Popover()
         pop.set_relative_to(anchor)
+        pop.set_pointing_to(rect)          # 指向具体那个词
         pop.set_position(Gtk.PositionType.BOTTOM)
-        pop.set_modal(False)
+        pop.set_modal(True)                # 点外面自动收起
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        box.get_style_context().add_class("bubble")
         box.set_margin_start(10)
         box.set_margin_end(10)
         box.set_margin_top(8)
@@ -685,63 +733,26 @@ class LibraryPage:
 
         head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         wt = Gtk.Label(xalign=0)
-        wt.set_markup(f"<span size='large' weight='bold'>{pango_esc(token)}</span>")
-        wt.get_style_context().add_class("bubble-word")
+        wt.set_markup(f"<span size='large' weight='bold'>{pango_esc(link['text'])}</span>")
         zt = Gtk.Label(xalign=0)
-        zt.set_text(zh)
-        zt.get_style_context().add_class("bubble-zh")
+        zt.set_text(link["zh"])
+        zt.get_style_context().add_class("muted")
         head.pack_start(wt, False, False, 0)
         head.pack_start(zt, False, False, 0)
         box.pack_start(head, False, False, 0)
 
         body = Gtk.Label(xalign=0)
         body.set_line_wrap(True)
-        body.set_max_width_chars(34)
-        body.set_text(note or zh)
-        body.get_style_context().add_class("bubble-note")
+        body.set_max_width_chars(32)
+        body.set_text(link.get("note") or link["zh"])
         box.pack_start(body, False, False, 0)
 
         pop.add(box)
         box.show_all()
         self._popover = pop
+        pop.connect("closed", lambda *_: setattr(self, "_popover", None))
         pop.popup()
         return True
-
-    # ---- 复制全部 ----
-    def on_detail_press(self, _w, event) -> bool:
-        from gi.repository import Gtk
-        if event.button != 3:
-            return False
-        menu = Gtk.Menu()
-        item = Gtk.MenuItem(label="复制全部内容")
-        item.connect("activate", lambda *_: self.copy_all())
-        menu.append(item)
-        item2 = Gtk.MenuItem(label="只复制英文全称")
-        item2.connect("activate", lambda *_: self.copy_field("en_full"))
-        menu.append(item2)
-        menu.show_all()
-        menu.popup_at_pointer(event)
-        return True
-
-    def copy_all(self, *_args) -> None:
-        from gi.repository import Gdk, Gtk
-        text = getattr(self, "_detail_text", "")
-        if not text:
-            return
-        cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        cb.set_text(text, -1)
-        cb.store()
-        self.win.toast("已复制全部内容")
-
-    def copy_field(self, field: str) -> None:
-        from gi.repository import Gdk, Gtk
-        w = getattr(self, "_current_word", None)
-        if not w:
-            return
-        cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        cb.set_text(w.get(field, "") or "", -1)
-        cb.store()
-        self.win.toast("已复制英文全称")
 
 class QuizPage:
     """答题：开始 → 作答 → 结果。"""
@@ -1346,7 +1357,6 @@ class MainWindow:
         root.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL), False, False, 0)
         root.pack_start(self.stack, True, True, 0)
         self.window.add(root)
-        self.window.connect("key-press-event", self._on_key)
 
         self._toast_timeout = None
 
@@ -1365,20 +1375,6 @@ class MainWindow:
             self._syncing_nav = True
             self._nav.select_row(row)
             self._syncing_nav = False
-
-    def _on_key(self, _w, event) -> bool:
-        from gi.repository import Gdk, Gtk
-        if not (event.state & Gdk.ModifierType.CONTROL_MASK):
-            return False
-        if event.keyval not in (Gdk.KEY_a, Gdk.KEY_A):
-            return False
-        focus = self.window.get_focus()
-        if isinstance(focus, Gtk.Entry):
-            return False  # 输入框里 Ctrl+A 交给输入框自己
-        if self.stack.get_visible_child_name() == "library":
-            self.library.copy_all()
-            return True
-        return False
 
     def show_all(self) -> None:
         self.window.show_all()
