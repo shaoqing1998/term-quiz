@@ -750,9 +750,31 @@ class LibraryPage:
         sw2.get_style_context().add_class("plain-list")
         sw2.add(self.detail)
 
+        # 右上角工具条
+        self.toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.toolbar.set_margin_start(28)
+        self.toolbar.set_margin_end(24)
+        self.toolbar.set_margin_top(10)
+        self.toolbar.set_margin_bottom(2)
+
+        self.mcq_btn = Gtk.Button()
+        self.mcq_btn.add(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6))
+        self.mcq_btn.get_child().pack_start(
+            Gtk.Image.new_from_icon_name("dialog-question-symbolic", Gtk.IconSize.BUTTON),
+            False, False, 0)
+        self.mcq_lbl = Gtk.Label(label="相关题目")
+        self.mcq_btn.get_child().pack_start(self.mcq_lbl, False, False, 0)
+        self.mcq_btn.connect("clicked", lambda *_: self._open_rel())
+        self.toolbar.pack_end(self.mcq_btn, False, False, 0)
+        self._rel = []
+
+        right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        right.pack_start(self.toolbar, False, False, 0)
+        right.pack_start(sw2, True, True, 0)
+
         self.box.pack_start(left, False, False, 0)
         self.box.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL), False, False, 0)
-        self.box.pack_start(sw2, True, True, 0)
+        self.box.pack_start(right, True, True, 0)
 
         self.refresh_list()
 
@@ -914,8 +936,12 @@ class LibraryPage:
             self._links.append({"start": start, "end": b.get_char_count(),
                                 "kind": kind, "text": text, "payload": payload})
 
+        self._rel = rel
         if rel:
-            action_link(f"▸ 相关题目（{len(rel)}）", "mcq", rel)
+            self.mcq_lbl.set_text(f"相关题目 {len(rel)}")
+            self.mcq_btn.show()
+        else:
+            self.mcq_btn.hide()
 
 
         if w.get("desc"):
@@ -924,6 +950,10 @@ class LibraryPage:
 
         self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
 
+
+    def _open_rel(self) -> None:
+        if self._rel:
+            self.open_mcq_dialog(self._rel)
 
     # ---------------- 相关题目弹窗 ----------------
     def open_mcq_dialog(self, rel) -> None:
@@ -987,9 +1017,6 @@ class LibraryPage:
         off = it.get_offset()
         for link in self._links:
             if link["start"] <= off < link["end"]:
-                if link.get("kind") == "mcq":
-                    self.open_mcq_dialog(link["payload"])
-                    return True
                 r = tv.get_iter_location(it)
                 wx, wy = tv.buffer_to_window_coords(Gtk.TextWindowType.WIDGET, r.x, r.y)
                 rect = Gdk.Rectangle()
