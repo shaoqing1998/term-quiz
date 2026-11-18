@@ -510,7 +510,9 @@ class LibraryPage:
         self.detail.set_top_margin(20)
         self.detail.set_bottom_margin(20)
         self.detail.get_style_context().add_class("detail-view")
+        self.detail.connect("button-press-event", self.on_detail_press)
         self.detail.connect("button-release-event", self.on_detail_release)
+        self._press_xy = (0.0, 0.0)
         self.buf = self.detail.get_buffer()
         self._make_tags()
 
@@ -685,15 +687,23 @@ class LibraryPage:
         self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
 
     # ---------------- 点词弹气泡 ----------------
+    def on_detail_press(self, tv, event):
+        if event.button == 1:
+            self._press_xy = (event.x, event.y)
+        return False  # 不拦截，拖选照常
+
     def on_detail_release(self, tv, event):
         from gi.repository import Gdk, Gtk
         if event.button != 1:
             return False
-        if tv.get_buffer().get_has_selection():
-            return False  # 正在拖选，不当点击处理
+        px, py = getattr(self, "_press_xy", (event.x, event.y))
+        if abs(event.x - px) + abs(event.y - py) > 6:
+            return False  # 移动超过 6px，视为拖选
         bx, by = tv.window_to_buffer_coords(Gtk.TextWindowType.WIDGET,
                                             int(event.x), int(event.y))
-        it = tv.get_iter_at_location(bx, by)
+        hit, it = tv.get_iter_at_location(bx, by)
+        if not hit:
+            return False
         off = it.get_offset()
         for link in self._links:
             if link["start"] <= off < link["end"]:
