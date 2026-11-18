@@ -5,7 +5,7 @@
 set -euo pipefail
 
 PROJ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VER="1.0.12"
+VER="1.0.13"
 PKG="term-quiz"
 DIST="$PROJ/dist"
 STAGE="$DIST/.stage"
@@ -86,7 +86,7 @@ cat > "$DIST/install.sh" <<'EOF'
 # 用法：curl -fsSL https://你的域名/term-quiz/install.sh | bash
 set -euo pipefail
 BASE="${TERM_QUIZ_BASE:-https://example.com/term-quiz}"
-VER="1.0.12"
+VER="1.0.13"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 echo "从 $BASE 下载 term-quiz-$VER.tar.gz …"

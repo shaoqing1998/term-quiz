@@ -757,6 +757,10 @@ class LibraryPage:
         self.toolbar.set_margin_top(10)
         self.toolbar.set_margin_bottom(2)
 
+        self.title_label = Gtk.Label(xalign=0)
+        self.title_label.set_markup("<span size='xx-large' weight='bold'></span>")
+        self.toolbar.pack_start(self.title_label, False, False, 0)
+
         self.mcq_btn = Gtk.Button()
         self.mcq_btn.add(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6))
         self.mcq_btn.get_child().pack_start(
@@ -878,10 +882,12 @@ class LibraryPage:
                 if r.get("ok"):
                     ok += 1
 
-        ins(w["term"], "term")
+        self.title_label.set_markup(
+            f"<span size='xx-large' weight='bold'>{pango_esc(w['term'])}</span>")
         if total:
             pct = int(round(ok / total * 100))
-            ins(f"\n历史正确率 {pct}%（{ok}/{total}）", "chip")
+            ins(f"历史正确率 {pct}%（{ok}/{total}）", "chip")
+            ins("\n", "body")
 
         def sec(title: str) -> None:
             ins("\n", "body")
