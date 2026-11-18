@@ -2,7 +2,7 @@
 # 用法：curl -fsSL https://你的域名/term-quiz/install.sh | bash
 set -euo pipefail
 BASE="${TERM_QUIZ_BASE:-https://example.com/term-quiz}"
-VER="1.0.8"
+VER="1.0.9"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 echo "从 $BASE 下载 term-quiz-$VER.tar.gz …"

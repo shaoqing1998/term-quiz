@@ -870,6 +870,11 @@ class LibraryPage:
         self.history = load_history()
         self._links: list[dict[str, Any]] = []
         self._popover = None
+        self._web = None
+        self._pending = None
+        self._req = 0
+        self._baike_start = 0
+        self._baike_end = 0
 
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
 
@@ -1094,8 +1099,12 @@ class LibraryPage:
         if rel:
             action_link(f"▸ 相关题目（{len(rel)}）", "mcq", rel)
 
-        action_link(f"▸ 百度百科：{w.get('en_full') or w['term']}", "wiki",
-                    {"term": w["term"], "en_full": w.get("en_full") or w["term"]})
+
+        sec("百度百科")
+        self._baike_start = b.get_char_count()
+        ins("正在获取…", "muted")
+        self._baike_end = b.get_char_count()
+        self.request_baike(w["term"], w.get("en_full") or w["term"])
 
         self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
 
@@ -1143,6 +1152,98 @@ class LibraryPage:
     # ---------------- 内嵌维基百科 ----------------
     def open_wiki(self, term: str, en_full: str) -> None:
         BaikeDialog(self.win.window, term, en_full).run()
+
+
+    # ---------------- 百度百科（自动抓正文） ----------------
+    def _ensure_web(self):
+        if self._web is not None:
+            return self._web
+        try:
+            import gi
+            gi.require_version("WebKit2", "4.1")
+            from gi.repository import WebKit2
+            w = WebKit2.WebView()
+            w.set_size_request(1, 1)
+            w.set_no_show_all(True)
+            self.box.pack_start(w, False, False, 0)
+            w.show()
+            w.hide()
+            w.connect("load-changed", self._on_web_load)
+            w.connect("load-failed", self._on_web_fail)
+            self._web = w
+        except Exception:
+            self._web = False
+        return self._web
+
+    def request_baike(self, term: str, en_full: str) -> None:
+        self._req += 1
+        req = self._req
+        cache = load_baike_cache().get(term)
+        if cache and cache.get("text"):
+            self._apply_baike(cache["text"], req)
+            return
+        web = self._ensure_web()
+        if not web:
+            self._apply_baike("（本机没有 WebKitGTK，取不到百科正文）", req)
+            return
+        from urllib.parse import quote
+        url = "https://baike.baidu.com/search/word?word=" + quote(en_full)
+        if self._pending and self._pending[2] == url:
+            return  # 同一个词条已经在抓了，别重复请求
+        self._pending = (req, term, url)
+        web.load_uri(url)
+
+    def _on_web_load(self, view, ev):
+        from gi.repository import WebKit2, GLib
+        if ev != WebKit2.LoadEvent.FINISHED or not self._pending:
+            return
+        GLib.timeout_add(1200, lambda: (view.run_javascript(
+            JS_EXTRACT, None, self._on_baike_js, None), False)[1])
+
+    def _on_web_fail(self, view, ev, uri, err):
+        if not self._pending:
+            return False
+        req, _term, pending_url = self._pending
+        msg = (err.message or "")
+        if "取消" in msg or "cancelled" in msg.lower():
+            return False  # 被新请求顶掉，忽略
+        if uri and pending_url and uri != pending_url:
+            return False  # 不是当前这个请求
+        self._pending = None
+        self._apply_baike(f"（百科加载失败：{msg}）", req)
+        return False
+
+    def _on_baike_js(self, view, res, _data):
+        if not self._pending:
+            return
+        req, term, _url = self._pending
+        self._pending = None
+        try:
+            val = view.run_javascript_finish(res).get_js_value().to_string()
+            info = json.loads(val)
+            text = (info.get("text") or "").strip()
+        except Exception as e:
+            self._apply_baike(f"（百科解析失败：{e}）", req)
+            return
+        if len(text) < 40:
+            self._apply_baike("（百科没有返回可识别的内容，可能触发了验证页）", req)
+            return
+        cache = load_baike_cache()
+        cache[term] = {"text": text, "title": info.get("title", ""),
+                       "ts": datetime.now(TZ).isoformat(timespec="seconds")}
+        save_baike_cache(cache)
+        self._apply_baike(text, req)
+
+    def _apply_baike(self, text: str, req: int) -> None:
+        if req != self._req:
+            return  # 已经切到别的词条了
+        b = self.buf
+        start, end = self._baike_start, self._baike_end
+        if end <= start or end > b.get_char_count():
+            return
+        b.delete(b.get_iter_at_offset(start), b.get_iter_at_offset(end))
+        b.insert_with_tags_by_name(b.get_iter_at_offset(start), text, "body")
+        self._baike_end = start + len(text)
 
     # ---------------- 点词弹气泡 ----------------
     def on_detail_press(self, tv, event):
@@ -1822,7 +1923,7 @@ class MainWindow:
         header = Gtk.HeaderBar()
         header.set_show_close_button(True)
         header.props.title = APP_NAME
-        header.props.subtitle = "题库 · 答题 · 记录"
+        header.props.subtitle = "词条 · 答题 · 记录"
         self.window.set_titlebar(header)
 
         self.toast_label = Gtk.Label(label="")
