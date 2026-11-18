@@ -4,7 +4,7 @@
 set -euo pipefail
 
 REPO="shaoqing1998/term-quiz"
-VER="1.0.14"
+VER="1.0.15"
 BASE="https://github.com/${REPO}/releases/download/v${VER}"
 
 TMP="$(mktemp -d)"

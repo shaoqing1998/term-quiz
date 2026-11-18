@@ -52,6 +52,7 @@ def words_path() -> Path:
 
 APP_ID = "io.github.termquiz"
 APP_NAME = "术语训练"
+APP_VERSION = "1.0.14"
 LOG_PATH = USER_DIR / "app.log"
 
 
@@ -752,32 +753,7 @@ class LibraryPage:
         sw2.get_style_context().add_class("plain-list")
         sw2.add(self.detail)
 
-        # 右上角工具条
-        self.toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self.toolbar.set_margin_start(28)
-        self.toolbar.set_margin_end(24)
-        self.toolbar.set_margin_top(10)
-        self.toolbar.set_margin_bottom(2)
-
-        self.title_label = Gtk.Label(xalign=0)
-        self.title_label.set_ellipsize(3)
-        self.title_label.set_max_width_chars(28)
-        self.title_label.set_markup("<span size='xx-large' weight='bold'></span>")
-        self.toolbar.pack_start(self.title_label, False, False, 0)
-
-        self.mcq_btn = Gtk.Button()
-        self.mcq_btn.add(Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6))
-        self.mcq_btn.get_child().pack_start(
-            Gtk.Image.new_from_icon_name("dialog-question-symbolic", Gtk.IconSize.BUTTON),
-            False, False, 0)
-        self.mcq_lbl = Gtk.Label(label="相关题目")
-        self.mcq_btn.get_child().pack_start(self.mcq_lbl, False, False, 0)
-        self.mcq_btn.connect("clicked", lambda *_: self._open_rel())
-        self.toolbar.pack_end(self.mcq_btn, False, False, 0)
-        self._rel = []
-
         right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        right.pack_start(self.toolbar, False, False, 0)
         right.pack_start(sw2, True, True, 0)
 
         self.box.pack_start(left, False, False, 0)
@@ -851,9 +827,12 @@ class LibraryPage:
                 inner.pack_end(chip, False, False, 0)
             row.add(inner)
             self.list.add(row)
+            row.show_all()
             shown += 1
 
+        self.list.show_all()
         self.count_label.set_text(f"共 {len(self.db.get('words') or [])} 条，显示 {shown} 条")
+
 
         keep = getattr(self, "_current_word", None)
         keep_term = keep["term"] if keep else None
@@ -874,8 +853,13 @@ class LibraryPage:
         self._links = []
         self._rel = []
         self._current_word = None
-        self.title_label.set_markup("<span size='xx-large' weight='bold'>—</span>")
-        self.mcq_btn.hide()
+
+    def _scroll_top(self) -> bool:
+        self.detail.scroll_to_iter(self.buf.get_start_iter(), 0.0, True, 0.0, 0.0)
+        adj = self.detail.get_property("vadjustment")
+        if adj is not None:
+            adj.set_value(0.0)
+        return False
 
     def on_select(self, _lb, row) -> None:
         if row is None:
@@ -909,12 +893,10 @@ class LibraryPage:
                 if r.get("ok"):
                     ok += 1
 
-        self.title_label.set_markup(
-            f"<span size='xx-large' weight='bold'>{pango_esc(w['term'])}</span>")
+        ins(w["term"], "term")
         if total:
             pct = int(round(ok / total * 100))
-            ins(f"历史正确率 {pct}%（{ok}/{total}）", "chip")
-            ins("\n", "body")
+            ins(f"\n历史正确率 {pct}%（{ok}/{total}）", "chip")
 
         def sec(title: str) -> None:
             ins("\n", "body")
@@ -970,18 +952,15 @@ class LibraryPage:
                                 "kind": kind, "text": text, "payload": payload})
 
         self._rel = rel
-        if rel:
-            self.mcq_lbl.set_text(f"相关题目 {len(rel)}")
-            self.mcq_btn.show()
-        else:
-            self.mcq_btn.hide()
 
 
         if w.get("desc"):
             sec("说明")
             ins(w["desc"], "body")
 
-        self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
+        # 每次切换词条都回到顶部（scroll_to_mark 在光标已可见时不会滚）
+        from gi.repository import GLib
+        GLib.timeout_add(30, self._scroll_top)
 
 
     def _open_rel(self) -> None:
@@ -1834,7 +1813,7 @@ class App:
                 existing.window.present()
                 log("second activate: present existing window")
                 return
-            log("activate: building window")
+            log(f"activate: building window (v{APP_VERSION})")
             try:
                 from gi.repository import Gdk
                 Gdk.set_program_class("io.github.termquiz")
