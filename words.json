@@ -1,0 +1,100 @@
+{
+  "settings": {
+    "work_hours": [9, 19],
+    "weekdays_only": true,
+    "notify_expire_ms": 22000
+  },
+  "words": [
+    {
+      "term": "POC",
+      "en_full": "Proof of Concept",
+      "en_aliases": ["proof-of-concept", "proof of concept"],
+      "zh": "概念验证 / 样机验证",
+      "zh_aliases": ["概念验证", "样机验证", "可行性验证", "概念证实", "验证原型"],
+      "pronounce": "/pruːf əv ˈkɒnsept/（美音 /pruːf əv ˈkɑːnsept/）",
+      "pronounce_accept": [
+        "/pruːf əv ˈkɒnsept/",
+        "/pruːf əv ˈkɑːnsept/",
+        "pruːf əv ˈkɒnsept"
+      ],
+      "pronounce_choices": [
+        "/pruːf əv ˈkɒnsept/",
+        "/pɔɪnt əv ˈkɒntækt/",
+        "/pɔːt əv kɔːl/",
+        "/piːs əv keɪk/"
+      ]
+    },
+    {
+      "term": "OPS",
+      "en_full": "Open Pluggable Specification",
+      "en_aliases": ["open pluggable specification"],
+      "zh": "开放可插拔规范（商显/白板用的可插拔计算盒）",
+      "zh_aliases": ["开放可插拔规范", "可插拔计算盒", "插拔式电脑", "OPS盒子", "开放即插规范"],
+      "pronounce": "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/（美音 /ˈoʊpən …/）",
+      "pronounce_accept": [
+        "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/",
+        "/ˈoʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/"
+      ],
+      "pronounce_choices": [
+        "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/",
+        "/ˌɒpəˈreɪʃnz/",
+        "/ˈəʊpən pəˈzɪʃnɪŋ ˈsɪstəm/",
+        "/ˈɒptɪkl ˈpækɪt swɪtʃ/"
+      ]
+    },
+    {
+      "term": "SMARC",
+      "en_full": "Smart Mobility ARChitecture",
+      "en_aliases": [
+        "smart mobility architecture",
+        "SMARC module",
+        "SMARC COM"
+      ],
+      "zh": "SGET 的核心板/金手指模组规格（智能移动架构）",
+      "zh_aliases": [
+        "智能移动架构",
+        "核心板模组规格",
+        "金手指核心板",
+        "SMARC板",
+        "SGET核心板规格",
+        "核心板规格"
+      ],
+      "pronounce": "/ˈsmɑːrk/（英音常读 /ˈsmɑːk/）",
+      "pronounce_accept": [
+        "/ˈsmɑːrk/",
+        "/ˈsmɑːk/",
+        "smarc"
+      ],
+      "pronounce_choices": [
+        "/ˈsmɑːrk/",
+        "/ˈsmaːs/",
+        "/ˈsmɑːt ˈsɪrkɪt/",
+        "/es em ˈɑːk/"
+      ]
+    }
+  ],
+  "mcqs": [
+    {
+      "id": "ops-vs-smarc",
+      "prompt": "OPS 和 SMARC 的关系，哪句更对？",
+      "choices": [
+        "OPS 是整机可插拔计算盒规格；SMARC 是盒子内部核心模组规格",
+        "SMARC 就是 OPS 的另一个名字",
+        "OPS 是核心板，SMARC 是白板上的 80-pin 插槽",
+        "两者都是移远芯片型号"
+      ],
+      "explain": "OPS 管整机怎么插计算盒；SMARC 管盒子里面那块带 CPU 的金手指核心板。"
+    },
+    {
+      "id": "board-names",
+      "prompt": "SMARC 板、核心板、底板、载板，哪句对？",
+      "choices": [
+        "SMARC 板就是核心板；底板和载板是同一块 OPS 载板",
+        "底板是 SMARC，载板是核心板",
+        "四个名字都指同一块板",
+        "载板是 SG560D 模组，核心板是 80-pin"
+      ],
+      "explain": "短卡：SMARC = 核心板。大板：底板 = 载板，插核心板再出 80P。"
+    }
+  ]
+}
