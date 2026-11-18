@@ -71,10 +71,13 @@ TYPE_LABEL = {
     "relation": "板卡关系四选一",
 }
 
-# 逐词释义：短义 + 此处义 + 词根词缀 + 原意
+# 逐词释义：词典义项 + 此处义 + 词根词缀 + 原意
 WORD_BOOK = {
     "proof": {
         "zh": "验证",
+        "senses": ["证据；证明（n.）", "验证；检验（n.）", "（印刷）校样（n.）", "（酒）标准酒精度（n.）",
+                   "防……的（adj.）", "使不透……的（adj.）"],
+        "used": 2,
         "sense": "工程里的 proof 不是数学证明，而是「拿出东西来证明这条路走得通」",
         "root": "prove（动词：证明）",
         "affix": "无",
@@ -82,13 +85,17 @@ WORD_BOOK = {
     },
     "of": {
         "zh": "……的",
+        "senses": ["……的（所属关系）", "由……组成的", "关于；涉及", "来自；出自", "（数量）……的"],
+        "used": 1,
         "sense": "结构助词，连接两个名词，本身不承载技术含义",
         "root": "古英语 of「从、关于」",
         "affix": "无",
-        "origin": "与 off 同源，原义是「从……离开」，后来弱化成所属关系",
+        "origin": "与 off 同源，原义「从……离开」，后来弱化成所属关系",
     },
     "concept": {
         "zh": "概念",
+        "senses": ["概念；观念（n.）", "构想；设想（n.）", "（产品）概念款（n.）"],
+        "used": 2,
         "sense": "还停留在想法阶段的方案；POC 就是把它先做成能跑的东西",
         "root": "conceive（动词：构想、孕育）",
         "affix": "-cept 来自拉丁 capere（抓、拿）",
@@ -96,6 +103,9 @@ WORD_BOOK = {
     },
     "open": {
         "zh": "开放的",
+        "senses": ["打开（v.）", "开着的；敞开的（adj.）", "开放的；公开的（adj.）", "坦率的（adj.）",
+                   "开始营业（v.）", "空缺的（职位）"],
+        "used": 3,
         "sense": "指规范公开、任何厂商都能照着做，不等于开源",
         "root": "open（形容词兼动词：打开）",
         "affix": "无",
@@ -103,6 +113,8 @@ WORD_BOOK = {
     },
     "pluggable": {
         "zh": "可插拔的",
+        "senses": ["可插拔的；能插入的（adj.）", "可堵塞的（adj.，罕用）"],
+        "used": 1,
         "sense": "模块能像插头一样直接插进插槽，不用焊接或改线",
         "root": "plug（名词：插头/塞子；动词：插入）",
         "affix": "-able（形容词后缀：能……的、可……的）",
@@ -110,6 +122,8 @@ WORD_BOOK = {
     },
     "specification": {
         "zh": "规范",
+        "senses": ["规格；规范（n.）", "详细说明；明细表（n.）", "（技术）规格书（n.）", "具体化；明确化（n.）"],
+        "used": 1,
         "sense": "规定尺寸、引脚、电气参数这类硬指标的文档，照它做才能互通",
         "root": "specify（动词：明确规定）",
         "affix": "-ation（名词后缀：动作、过程或结果）",
@@ -117,6 +131,9 @@ WORD_BOOK = {
     },
     "smart": {
         "zh": "智能的",
+        "senses": ["聪明的；机敏的（adj.）", "整洁的；漂亮的（adj.）", "智能的（设备）（adj.）",
+                   "敏捷的（adj.）", "（疼痛）剧烈的（adj.）"],
+        "used": 3,
         "sense": "偏营销词，通常只说「带处理器、能跑系统」，不是指 AI",
         "root": "smart（形容词：聪明的、整洁的）",
         "affix": "无",
@@ -124,6 +141,8 @@ WORD_BOOK = {
     },
     "mobility": {
         "zh": "移动性",
+        "senses": ["移动性；流动性（n.）", "机动性（n.）", "（社会）阶层流动（n.）"],
+        "used": 1,
         "sense": "体积小、功耗低，能装进移动设备或嵌入式设备",
         "root": "mobile（形容词：可移动的）",
         "affix": "-ity（名词后缀：性质、状态）",
@@ -131,6 +150,8 @@ WORD_BOOK = {
     },
     "architecture": {
         "zh": "架构",
+        "senses": ["建筑学；建筑风格（n.）", "（计算机）架构（n.）", "结构；构造（n.）", "（组织）架构（n.）"],
+        "used": 2,
         "sense": "芯片内部的组织方式（核、缓存、总线怎么排），不是建筑",
         "root": "architect（名词：建筑师）",
         "affix": "-ure（名词后缀：行为、结果）",
@@ -138,13 +159,17 @@ WORD_BOOK = {
     },
     "baseband": {
         "zh": "基带",
+        "senses": ["基带（n.，通信）", "基带信号（n.）"],
+        "used": 1,
         "sense": "负责无线通信的底层信号处理，和 AP（应用处理器）是两套东西",
         "root": "base（基础的）+ band（频带）",
         "affix": "复合词",
-        "origin": "通信术语，指未经调制的原始信号所占的频带，与「射频/中频」相对",
+        "origin": "通信术语，指未经调制的原始信号所占的频带，与「射频 / 中频」相对",
     },
     "processor": {
         "zh": "处理器",
+        "senses": ["处理器（n.）", "加工者；处理者（n.）", "（食品）加工机（n.）"],
+        "used": 1,
         "sense": "执行指令的芯片；AP 跑系统，BP 跑通信",
         "root": "process（动词：处理）",
         "affix": "-or（名词后缀：做某事的人或物）",
@@ -152,6 +177,8 @@ WORD_BOOK = {
     },
     "module": {
         "zh": "模组",
+        "senses": ["模块；组件（n.）", "（航天）舱（n.）", "（课程）单元（n.）"],
+        "used": 1,
         "sense": "把芯片、内存、电源做在一块小板上，直接贴到主板上用",
         "root": "mode（名词：模式、尺度）",
         "affix": "-ule（名词后缀：小）",
@@ -159,6 +186,8 @@ WORD_BOOK = {
     },
     "board": {
         "zh": "板",
+        "senses": ["板；木板（n.）", "委员会；董事会（n.）", "登机；上船（v.）", "（电路）板（n.）", "伙食（n.）"],
+        "used": 4,
         "sense": "承载元器件的 PCB，按功能分核心板、底板、载板",
         "root": "board（名词：木板）",
         "affix": "无",
@@ -166,6 +195,8 @@ WORD_BOOK = {
     },
     "interface": {
         "zh": "接口",
+        "senses": ["接口（n.）", "界面（n.）", "交界面；接触面（n.）", "接合；连接（v.）"],
+        "used": 1,
         "sense": "两个部件之间约定好的连接方式，分物理接口和软件接口",
         "root": "face（名词：面）",
         "affix": "inter-（前缀：在……之间）",
@@ -173,6 +204,8 @@ WORD_BOOK = {
     },
     "serial": {
         "zh": "串行",
+        "senses": ["连续的；顺序的（adj.）", "串行的（adj.，通信）", "连载的；分期的（adj.）", "连续剧（n.）"],
+        "used": 2,
         "sense": "数据一位一位传，线少、距离长，调试口常用",
         "root": "series（名词：系列）",
         "affix": "-al（形容词后缀：……的）",
@@ -180,6 +213,8 @@ WORD_BOOK = {
     },
     "debug": {
         "zh": "调试",
+        "senses": ["调试；排错（v.）", "拆除窃听器（v.）"],
+        "used": 1,
         "sense": "定位问题的过程；调试口通常是串口或 USB",
         "root": "bug（名词：虫子、故障）",
         "affix": "de-（前缀：去除）",
@@ -187,6 +222,8 @@ WORD_BOOK = {
     },
     "boot": {
         "zh": "启动",
+        "senses": ["靴子（n.）", "启动（v./n.）", "踢（v.）", "解雇（v.，俚）", "（汽车）后备箱（n.，英）"],
+        "used": 2,
         "sense": "从上电到系统跑起来的过程，涉及 bootloader、kernel、init",
         "root": "bootstrap（名词：靴带）",
         "affix": "截短词",
@@ -194,6 +231,8 @@ WORD_BOOK = {
     },
     "kernel": {
         "zh": "内核",
+        "senses": ["（坚果/谷物）仁；核（n.）", "（系统）内核（n.）", "核心；要点（n.）"],
+        "used": 2,
         "sense": "操作系统的核心，管进程、内存、驱动",
         "root": "kern（名词：核、谷粒）",
         "affix": "-el（指小后缀）",
@@ -201,6 +240,8 @@ WORD_BOOK = {
     },
     "driver": {
         "zh": "驱动",
+        "senses": ["司机（n.）", "驱动程序（n.）", "（高尔夫）一号木杆（n.）", "驱动因素（n.）"],
+        "used": 2,
         "sense": "让内核认识硬件的那层代码",
         "root": "drive（动词：驱动、驾驶）",
         "affix": "-er（名词后缀：做某事的东西）",
@@ -208,6 +249,8 @@ WORD_BOOK = {
     },
     "display": {
         "zh": "显示",
+        "senses": ["展示；陈列（v./n.）", "显示器（n.）", "（计算机）显示输出（n.）", "炫耀（v.）"],
+        "used": 3,
         "sense": "出图通路；常涉及 DP/HDMI 和 DRM 框架",
         "root": "play（动词：展开、折叠）",
         "affix": "dis-（前缀：分开）",
@@ -215,6 +258,8 @@ WORD_BOOK = {
     },
     "audio": {
         "zh": "音频",
+        "senses": ["音频的；声音的（adj.）", "音频设备（n.）", "声音录制 / 播放（n.）"],
+        "used": 1,
         "sense": "声音通路；Android 上走 AudioFlinger 和 HAL",
         "root": "audire（拉丁动词：听）",
         "affix": "无",
@@ -222,6 +267,8 @@ WORD_BOOK = {
     },
     "trusted": {
         "zh": "可信的",
+        "senses": ["可信的；受信任的（adj.）", "（法律）受托的（adj.）"],
+        "used": 1,
         "sense": "经过签名校验、系统认可的那部分代码或环境",
         "root": "trust（动词：信任）",
         "affix": "-ed（形容词后缀：被……的）",
@@ -229,6 +276,8 @@ WORD_BOOK = {
     },
     "execution": {
         "zh": "执行",
+        "senses": ["执行；实施（n.）", "（法律）死刑（n.）", "（艺术）表现手法（n.）"],
+        "used": 1,
         "sense": "代码被真正运行起来的过程",
         "root": "execute（动词：执行）",
         "affix": "-ion（名词后缀：动作、过程）",
@@ -236,6 +285,8 @@ WORD_BOOK = {
     },
     "environment": {
         "zh": "环境",
+        "senses": ["环境（n.）", "（计算机）运行环境（n.）", "周围状况（n.）"],
+        "used": 2,
         "sense": "代码运行时所处的上下文（特权级别、内存空间、依赖）",
         "root": "environ（动词：包围）",
         "affix": "-ment（名词后缀：结果、状态）",
@@ -252,13 +303,17 @@ def split_words(text: str) -> list[str]:
 PHRASES = {
     "proof of": {
         "zh": "对……的验证",
-        "sense": "proof of X 是固定搭配，整体表示「X 的证明 / 验证」",
+        "senses": ["对……的证明 / 验证（固定搭配）"],
+        "used": 1,
+        "sense": "proof of X 整体表示「X 的证明」，不拆开逐字理解",
         "root": "proof + of",
         "affix": "无（介词短语）",
         "origin": "英语里 of 引出来源或对象，proof of 直译「关于……的证据」",
     },
     "point of contact": {
         "zh": "对接人",
+        "senses": ["对接人（n.）", "（物理）接触点（n.）"],
+        "used": 1,
         "sense": "项目里负责对接的那个人",
         "root": "point + of + contact",
         "affix": "无（介词短语）",
@@ -266,6 +321,8 @@ PHRASES = {
     },
     "plug and play": {
         "zh": "即插即用",
+        "senses": ["即插即用（n./adj.）"],
+        "used": 1,
         "sense": "插上就能用，不需要额外装驱动或配置",
         "root": "plug + and + play",
         "affix": "无（并列短语）",
@@ -284,6 +341,8 @@ def word_info(token: str):
         if all(parts):
             return {
                 "zh": "".join(p["zh"] for p in parts),
+                "senses": ["复合词，见各组成部分"],
+                "used": 1,
                 "sense": "复合词，" + "；".join(p["sense"] for p in parts),
                 "root": " + ".join(p["root"] for p in parts),
                 "affix": "复合词",
@@ -293,7 +352,7 @@ def word_info(token: str):
 
 
 def segment_words(text: str) -> list[dict[str, Any]]:
-    """按「短语优先」切分，返回 [{text, zh, sense, root, affix, origin}]。"""
+    """按「短语优先」切分，返回带释义的片段列表。"""
     toks = split_words(text)
     out: list[dict[str, Any]] = []
     i = 0
@@ -858,7 +917,7 @@ class LibraryPage:
         if rel:
             action_link(f"▸ 相关题目（{len(rel)}）", "mcq", rel)
 
-        action_link(f"▸ 维基百科：{w.get('en_full') or w['term']}", "wiki",
+        action_link(f"▸ 百度百科：{w.get('en_full') or w['term']}", "wiki",
                     {"term": w["term"], "en_full": w.get("en_full") or w["term"]})
 
         self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
@@ -909,10 +968,10 @@ class LibraryPage:
         from urllib.parse import quote
         from gi.repository import Gtk
 
-        zh = "https://zh.wikipedia.org/w/index.php?search=" + quote(en_full or term)
-        en = "https://en.wikipedia.org/w/index.php?search=" + quote(en_full or term)
+        zh = "https://baike.baidu.com/search/word?word=" + quote(en_full or term)
+        en = zh
 
-        dlg = Gtk.Dialog(title=f"维基百科 · {term}",
+        dlg = Gtk.Dialog(title=f"百度百科 · {term}",
                          transient_for=self.win.window, flags=0)
         dlg.set_default_size(980, 720)
         dlg.add_button("关闭", Gtk.ResponseType.CLOSE)
@@ -934,21 +993,19 @@ class LibraryPage:
         bar.set_margin_bottom(6)
 
         if view is not None:
-            b_zh = Gtk.Button(label="中文维基")
-            b_en = Gtk.Button(label="English")
+            b_zh = Gtk.Button(label="重新加载")
             b_br = Gtk.Button(label="用浏览器打开")
             b_zh.connect("clicked", lambda *_: view.load_uri(zh))
-            b_en.connect("clicked", lambda *_: view.load_uri(en))
             b_br.connect("clicked", lambda *_: Gtk.show_uri_on_window(
                 dlg, zh, Gtk.get_current_event_time()))
-            for b in (b_zh, b_en, b_br):
+            for b in (b_zh, b_br):
                 bar.pack_start(b, False, False, 0)
             area.pack_start(bar, False, False, 0)
             area.pack_start(view, True, True, 0)
             view.load_uri(zh)
 
             def _failed(_v, _ev, uri, err):
-                self.win.toast("维基加载失败，可能没有网络")
+                self.win.toast("百度百科加载失败，可能没有网络")
                 return False
 
             view.connect("load-failed", _failed)
@@ -1040,6 +1097,29 @@ class LibraryPage:
         head.pack_start(zt, False, False, 0)
         box.pack_start(head, False, False, 0)
 
+        senses = link.get("senses") or []
+        if senses:
+            t = Gtk.Label(xalign=0)
+            t.set_text("词典义")
+            t.get_style_context().add_class("muted")
+            box.pack_start(t, False, False, 0)
+
+            used = int(link.get("used") or 0)
+            lines = []
+            shown = senses[:6]
+            for i, item in enumerate(shown, 1):
+                if i == used:
+                    lines.append(f"<b>{i}. {pango_esc(item)}   ✔ 此处</b>")
+                else:
+                    lines.append(f"{i}. {pango_esc(item)}")
+            if len(senses) > 6:
+                lines.append("…")
+            sl = Gtk.Label(xalign=0)
+            sl.set_markup("\n".join(lines))
+            sl.set_line_wrap(True)
+            sl.set_max_width_chars(34)
+            box.pack_start(sl, False, False, 0)
+
         grid = Gtk.Grid()
         grid.set_column_spacing(10)
         grid.set_row_spacing(6)
@@ -1064,7 +1144,13 @@ class LibraryPage:
         if row:
             box.pack_start(grid, False, False, 0)
 
-        pop.add(box)
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        sw.set_propagate_natural_height(True)
+        sw.set_max_content_height(460)
+        sw.add(box)
+        pop.add(sw)
+        sw.show_all()
         box.show_all()
         self._popover = pop
         pop.connect("closed", lambda *_: setattr(self, "_popover", None))
