@@ -4,7 +4,7 @@
 set -euo pipefail
 
 REPO="shaoqing1998/term-quiz"
-VER="1.0.0"
+VER="1.1.0"
 REL="https://github.com/${REPO}/releases/download/v${VER}"
 RAW="https://raw.githubusercontent.com/${REPO}/main/dist"
 

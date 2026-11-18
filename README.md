@@ -9,8 +9,8 @@
 ### 方式 1：deb 包（推荐，双击即可）
 
 ```bash
-wget https://github.com/shaoqing1998/term-quiz/releases/latest/download/term-quiz_1.0.0_all.deb
-sudo apt install ./term-quiz_1.0.0_all.deb
+wget https://github.com/shaoqing1998/term-quiz/releases/latest/download/term-quiz_1.1.0_all.deb
+sudo apt install ./term-quiz_1.1.0_all.deb
 ```
 
 依赖会自动装（`python3-gi`、`gir1.2-gtk-3.0`）。
@@ -22,6 +22,13 @@ curl -fsSL https://raw.githubusercontent.com/shaoqing1998/term-quiz/main/install
 ```
 
 装到 `~/.local/share/term-quiz`，不需要 root。
+
+## 功能
+
+- **题库**：搜索、排序（字母 / 正确率低优先 / 最近练习 / 练习次数）、新增与编辑术语
+- **英文全称逐词翻译**：如 `Proof（验证）· of（的）· Concept（概念）`，未收录的词自动查内置词表
+- **答题**：四种题型、可选 10/20/30/全部、优先出错得多的题
+- **记录**：总览、按题型、按术语、最近 30 条
 
 ## 使用
 
@@ -82,7 +89,7 @@ curl -fsSL https://raw.githubusercontent.com/shaoqing1998/term-quiz/main/install
 
 ```bash
 bash packaging/build.sh
-# 产出 dist/term-quiz_1.0.0_all.deb 和 dist/term-quiz-1.0.0.tar.gz
+# 产出 dist/term-quiz_1.1.0_all.deb 和 dist/term-quiz-1.1.0.tar.gz
 ```
 
 ## 命令行
