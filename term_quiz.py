@@ -71,29 +71,176 @@ TYPE_LABEL = {
     "relation": "板卡关系四选一",
 }
 
-# 逐词释义：短义 + 一句解释（点开气泡时显示）
+# 逐词释义：短义 + 此处义 + 词根词缀 + 原意
 WORD_BOOK = {
-    "proof": ("验证", "工程里的 proof 不是数学证明，而是「能做出东西证明这条路走得通」。"),
-    "of": ("的", "结构助词，只起连接作用，本身没有技术含义。"),
-    "concept": ("概念", "还停留在想法阶段的方案；POC 就是把这个想法先做成能跑的东西。"),
-    "open": ("开放的", "指规范公开、任何厂商都能照着做，不等于开源。"),
-    "pluggable": ("可插拔的", "像积木一样插进插槽就能用，不用焊接或改线。"),
-    "specification": ("规范", "规定尺寸、引脚、电气参数这类硬指标的文档，照它做才能互通。"),
-    "smart": ("智能的", "偏营销词，通常只说「带处理器、能跑系统」，不是指 AI。"),
-    "mobility": ("移动性", "体积小、功耗低，能装进移动设备或嵌入式设备。"),
-    "architecture": ("架构", "芯片内部的组织方式（核、缓存、总线怎么排），不是建筑。"),
-    "baseband": ("基带", "负责无线通信的底层信号处理，和 AP（应用处理器）是两套东西。"),
-    "processor": ("处理器", "执行指令的芯片；AP 跑系统，BP 跑通信。"),
-    "module": ("模组", "把芯片、内存、电源做在一块小板上，直接贴到主板上用。"),
-    "board": ("板", "承载元器件的 PCB，按功能分核心板、底板、载板。"),
-    "interface": ("接口", "两个部件之间约定好的连接方式，分物理接口和软件接口。"),
-    "serial": ("串行", "数据一位一位传，线少、距离长，调试口常用。"),
-    "debug": ("调试", "定位问题的过程；调试口通常是串口或 USB。"),
-    "boot": ("启动", "从上电到系统跑起来的过程，涉及 bootloader、kernel、init。"),
-    "kernel": ("内核", "操作系统的核心，管进程、内存、驱动。"),
-    "driver": ("驱动", "让内核认识硬件的那层代码。"),
-    "display": ("显示", "出图通路；常涉及 DP/HDMI 和 DRM 框架。"),
-    "audio": ("音频", "声音通路；Android 上走 AudioFlinger 和 HAL。"),
+    "proof": {
+        "zh": "验证",
+        "sense": "工程里的 proof 不是数学证明，而是「拿出东西来证明这条路走得通」",
+        "root": "prove（动词：证明）",
+        "affix": "无",
+        "origin": "拉丁 probare「检验、证明」，同源词 probe（探查）、probation（试用期）",
+    },
+    "of": {
+        "zh": "……的",
+        "sense": "结构助词，连接两个名词，本身不承载技术含义",
+        "root": "古英语 of「从、关于」",
+        "affix": "无",
+        "origin": "与 off 同源，原义是「从……离开」，后来弱化成所属关系",
+    },
+    "concept": {
+        "zh": "概念",
+        "sense": "还停留在想法阶段的方案；POC 就是把它先做成能跑的东西",
+        "root": "conceive（动词：构想、孕育）",
+        "affix": "-cept 来自拉丁 capere（抓、拿）",
+        "origin": "拉丁 concipere = con-（一起）+ capere（抓），原义「把想法收进脑子里」",
+    },
+    "open": {
+        "zh": "开放的",
+        "sense": "指规范公开、任何厂商都能照着做，不等于开源",
+        "root": "open（形容词兼动词：打开）",
+        "affix": "无",
+        "origin": "古英语 open「不关闭的」，与 up 同源，原义「向上抬起（盖子）」",
+    },
+    "pluggable": {
+        "zh": "可插拔的",
+        "sense": "模块能像插头一样直接插进插槽，不用焊接或改线",
+        "root": "plug（名词：插头/塞子；动词：插入）",
+        "affix": "-able（形容词后缀：能……的、可……的）",
+        "origin": "plug 原指「塞子」，16 世纪从中古荷兰语 plugge 借入，引申为「插进去的东西」",
+    },
+    "specification": {
+        "zh": "规范",
+        "sense": "规定尺寸、引脚、电气参数这类硬指标的文档，照它做才能互通",
+        "root": "specify（动词：明确规定）",
+        "affix": "-ation（名词后缀：动作、过程或结果）",
+        "origin": "拉丁 specificare「使具体」，由 species（外观、种类）+ facere（做）构成",
+    },
+    "smart": {
+        "zh": "智能的",
+        "sense": "偏营销词，通常只说「带处理器、能跑系统」，不是指 AI",
+        "root": "smart（形容词：聪明的、整洁的）",
+        "affix": "无",
+        "origin": "古英语 smeortan「刺痛」，先引申为「反应快、机敏」，再变成「聪明」",
+    },
+    "mobility": {
+        "zh": "移动性",
+        "sense": "体积小、功耗低，能装进移动设备或嵌入式设备",
+        "root": "mobile（形容词：可移动的）",
+        "affix": "-ity（名词后缀：性质、状态）",
+        "origin": "拉丁 mobilitas，mobilis = mov-（移动）+ -bilis（能……的）",
+    },
+    "architecture": {
+        "zh": "架构",
+        "sense": "芯片内部的组织方式（核、缓存、总线怎么排），不是建筑",
+        "root": "architect（名词：建筑师）",
+        "affix": "-ure（名词后缀：行为、结果）",
+        "origin": "拉丁 architectura，archi-（首领）+ tect（建造），原义「总建造师的手艺」",
+    },
+    "baseband": {
+        "zh": "基带",
+        "sense": "负责无线通信的底层信号处理，和 AP（应用处理器）是两套东西",
+        "root": "base（基础的）+ band（频带）",
+        "affix": "复合词",
+        "origin": "通信术语，指未经调制的原始信号所占的频带，与「射频/中频」相对",
+    },
+    "processor": {
+        "zh": "处理器",
+        "sense": "执行指令的芯片；AP 跑系统，BP 跑通信",
+        "root": "process（动词：处理）",
+        "affix": "-or（名词后缀：做某事的人或物）",
+        "origin": "拉丁 procedere「向前走」，引申为「推进、处理」",
+    },
+    "module": {
+        "zh": "模组",
+        "sense": "把芯片、内存、电源做在一块小板上，直接贴到主板上用",
+        "root": "mode（名词：模式、尺度）",
+        "affix": "-ule（名词后缀：小）",
+        "origin": "拉丁 modulus「小尺度」，是 modus（尺度）的指小形式",
+    },
+    "board": {
+        "zh": "板",
+        "sense": "承载元器件的 PCB，按功能分核心板、底板、载板",
+        "root": "board（名词：木板）",
+        "affix": "无",
+        "origin": "古英语 bord「木板」，因为早期电路板就是一块绝缘板",
+    },
+    "interface": {
+        "zh": "接口",
+        "sense": "两个部件之间约定好的连接方式，分物理接口和软件接口",
+        "root": "face（名词：面）",
+        "affix": "inter-（前缀：在……之间）",
+        "origin": "inter-（之间）+ face（面），原义「两个面之间的交界面」",
+    },
+    "serial": {
+        "zh": "串行",
+        "sense": "数据一位一位传，线少、距离长，调试口常用",
+        "root": "series（名词：系列）",
+        "affix": "-al（形容词后缀：……的）",
+        "origin": "拉丁 series「连续的一串」，串行就是排成一列逐个传",
+    },
+    "debug": {
+        "zh": "调试",
+        "sense": "定位问题的过程；调试口通常是串口或 USB",
+        "root": "bug（名词：虫子、故障）",
+        "affix": "de-（前缀：去除）",
+        "origin": "1940 年代一台继电器计算机里真有一只飞蛾卡住，从此故障叫 bug",
+    },
+    "boot": {
+        "zh": "启动",
+        "sense": "从上电到系统跑起来的过程，涉及 bootloader、kernel、init",
+        "root": "bootstrap（名词：靴带）",
+        "affix": "截短词",
+        "origin": "bootstrap 原义「靴带」，来自谚语 pull oneself up by one's bootstraps（靠自己站起来）",
+    },
+    "kernel": {
+        "zh": "内核",
+        "sense": "操作系统的核心，管进程、内存、驱动",
+        "root": "kern（名词：核、谷粒）",
+        "affix": "-el（指小后缀）",
+        "origin": "古英语 cyrnel「小谷粒」，core 的同源比喻：东西最里面那层",
+    },
+    "driver": {
+        "zh": "驱动",
+        "sense": "让内核认识硬件的那层代码",
+        "root": "drive（动词：驱动、驾驶）",
+        "affix": "-er（名词后缀：做某事的东西）",
+        "origin": "drive 原义「驱赶（牲畜）」，引申为「带动设备运转」",
+    },
+    "display": {
+        "zh": "显示",
+        "sense": "出图通路；常涉及 DP/HDMI 和 DRM 框架",
+        "root": "play（动词：展开、折叠）",
+        "affix": "dis-（前缀：分开）",
+        "origin": "拉丁 displicare「展开」，原义「把折起来的东西摊开给人看」",
+    },
+    "audio": {
+        "zh": "音频",
+        "sense": "声音通路；Android 上走 AudioFlinger 和 HAL",
+        "root": "audire（拉丁动词：听）",
+        "affix": "无",
+        "origin": "拉丁 audire「听」，同源词 audience（听众）、audible（听得见的）",
+    },
+    "trusted": {
+        "zh": "可信的",
+        "sense": "经过签名校验、系统认可的那部分代码或环境",
+        "root": "trust（动词：信任）",
+        "affix": "-ed（形容词后缀：被……的）",
+        "origin": "古诺斯语 traust「依靠、庇护」，原义「有依靠所以放心」",
+    },
+    "execution": {
+        "zh": "执行",
+        "sense": "代码被真正运行起来的过程",
+        "root": "execute（动词：执行）",
+        "affix": "-ion（名词后缀：动作、过程）",
+        "origin": "拉丁 exsequi = ex-（出）+ sequi（跟随），原义「一路跟到底」",
+    },
+    "environment": {
+        "zh": "环境",
+        "sense": "代码运行时所处的上下文（特权级别、内存空间、依赖）",
+        "root": "environ（动词：包围）",
+        "affix": "-ment（名词后缀：结果、状态）",
+        "origin": "古法语 environ「周围」，原义「围在四周的东西」",
+    },
 }
 
 
@@ -101,16 +248,52 @@ def split_words(text: str) -> list[str]:
     return [w for w in (text or "").split() if w]
 
 
-# 多词短语：优先整体匹配，不再逐词拆
+# 多词短语：优先整体匹配
 PHRASES = {
-    "proof of": ("对……的验证", "proof of 是固定搭配，整体表示「对……的证明 / 验证」，一般不拆开逐字理解。"),
-    "point of contact": ("对接人", "项目里的联系人 / 对接人。"),
-    "plug and play": ("即插即用", "插上就能用，不需要额外配置驱动。"),
+    "proof of": {
+        "zh": "对……的验证",
+        "sense": "proof of X 是固定搭配，整体表示「X 的证明 / 验证」",
+        "root": "proof + of",
+        "affix": "无（介词短语）",
+        "origin": "英语里 of 引出来源或对象，proof of 直译「关于……的证据」",
+    },
+    "point of contact": {
+        "zh": "对接人",
+        "sense": "项目里负责对接的那个人",
+        "root": "point + of + contact",
+        "affix": "无（介词短语）",
+        "origin": "军事术语，原指部队之间保持联系的联络点，后泛指对接人",
+    },
+    "plug and play": {
+        "zh": "即插即用",
+        "sense": "插上就能用，不需要额外装驱动或配置",
+        "root": "plug + and + play",
+        "affix": "无（并列短语）",
+        "origin": "1990 年代 PC 外设标准，缩写 PnP",
+    },
 }
 
 
+def word_info(token: str):
+    """返回释义字典，查不到返回 None。"""
+    key = "".join(ch for ch in token.lower() if ch.isalpha() or ch == "-")
+    if key in WORD_BOOK:
+        return WORD_BOOK[key]
+    if "-" in key:
+        parts = [WORD_BOOK.get(p) for p in key.split("-")]
+        if all(parts):
+            return {
+                "zh": "".join(p["zh"] for p in parts),
+                "sense": "复合词，" + "；".join(p["sense"] for p in parts),
+                "root": " + ".join(p["root"] for p in parts),
+                "affix": "复合词",
+                "origin": "；".join(p["origin"] for p in parts),
+            }
+    return None
+
+
 def segment_words(text: str) -> list[dict[str, Any]]:
-    """按「短语优先」切分，返回 [{text, zh, note}]。zh 为空表示没有解释。"""
+    """按「短语优先」切分，返回 [{text, zh, sense, root, affix, origin}]。"""
     toks = split_words(text)
     out: list[dict[str, Any]] = []
     i = 0
@@ -120,31 +303,18 @@ def segment_words(text: str) -> list[dict[str, Any]]:
             if i + n <= len(toks):
                 cand = " ".join(toks[i:i + n])
                 if cand.lower() in PHRASES:
-                    zh, note = PHRASES[cand.lower()]
-                    hit = (cand, zh, note, n)
+                    hit = (cand, PHRASES[cand.lower()], n)
                     break
         if hit:
-            cand, zh, note, n = hit
-            out.append({"text": cand, "zh": zh, "note": note})
+            cand, info, n = hit
+            out.append({"text": cand, **info})
             i += n
             continue
         tok = toks[i]
-        zh, note = word_info(tok)
-        out.append({"text": tok, "zh": zh, "note": note})
+        info = word_info(tok)
+        out.append({"text": tok, **(info or {"zh": None})})
         i += 1
     return out
-
-
-def word_info(token: str):
-    """返回 (中文短义, 详细解释) 或 (None, None)。"""
-    key = "".join(ch for ch in token.lower() if ch.isalpha() or ch == "-")
-    if key in WORD_BOOK:
-        return WORD_BOOK[key]
-    if "-" in key:
-        parts = [WORD_BOOK.get(p) for p in key.split("-")]
-        if all(parts):
-            return ("".join(x[0] for x in parts), "复合词：" + "；".join(x[1] for x in parts))
-    return (None, None)
 
 
 # ---------------------------------------------------------------- 数据
@@ -858,23 +1028,41 @@ class LibraryPage:
         box.set_margin_end(10)
         box.set_margin_top(8)
         box.set_margin_bottom(8)
-        box.set_size_request(260, -1)
+        box.set_size_request(360, -1)
 
         head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         wt = Gtk.Label(xalign=0)
         wt.set_markup(f"<span size='large' weight='bold'>{pango_esc(link['text'])}</span>")
         zt = Gtk.Label(xalign=0)
-        zt.set_text(link["zh"])
+        zt.set_text(link.get("zh") or "")
         zt.get_style_context().add_class("muted")
         head.pack_start(wt, False, False, 0)
         head.pack_start(zt, False, False, 0)
         box.pack_start(head, False, False, 0)
 
-        body = Gtk.Label(xalign=0)
-        body.set_line_wrap(True)
-        body.set_max_width_chars(32)
-        body.set_text(link.get("note") or link["zh"])
-        box.pack_start(body, False, False, 0)
+        grid = Gtk.Grid()
+        grid.set_column_spacing(10)
+        grid.set_row_spacing(6)
+        row = 0
+        for key, field in (("此处", "sense"), ("基词", "root"),
+                           ("词缀", "affix"), ("原意", "origin")):
+            val = (link.get(field) or "").strip()
+            if not val:
+                continue
+            k = Gtk.Label(xalign=0)
+            k.set_text(key)
+            k.get_style_context().add_class("muted")
+            k.set_valign(Gtk.Align.START)
+            k.set_size_request(30, -1)
+            v = Gtk.Label(xalign=0)
+            v.set_line_wrap(True)
+            v.set_max_width_chars(30)
+            v.set_text(val)
+            grid.attach(k, 0, row, 1, 1)
+            grid.attach(v, 1, row, 1, 1)
+            row += 1
+        if row:
+            box.pack_start(grid, False, False, 0)
 
         pop.add(box)
         box.show_all()
