@@ -538,6 +538,7 @@ class LibraryPage:
         b.create_tag("body", size=11 * Pango.SCALE)
         b.create_tag("muted", size=9 * Pango.SCALE, foreground="#8a8a8a")
         b.create_tag("fullname", size=13 * Pango.SCALE, weight=Pango.Weight.BOLD)
+        b.create_tag("ipa", size=12 * Pango.SCALE, family="DejaVu Sans")
         b.create_tag("link", size=13 * Pango.SCALE, weight=Pango.Weight.BOLD,
                      foreground="#1c71d8", underline=Pango.Underline.SINGLE)
 
@@ -652,7 +653,16 @@ class LibraryPage:
 
         if w.get("pronounce"):
             sec("读法")
-            ins(w["pronounce"], "body")
+            raw = w["pronounce"]
+            main, variant = raw, ""
+            if "（" in raw:
+                cut = raw.index("（")
+                main = raw[:cut].strip()
+                variant = raw[cut + 1:].rstrip("）").strip()
+            ins(main, "ipa")
+            if variant:
+                ins("\n", "body")
+                ins(variant, "muted")
 
         if w.get("en_aliases"):
             sec("英文别名")
@@ -661,13 +671,6 @@ class LibraryPage:
         if w.get("zh_aliases"):
             sec("中文别名")
             ins("、".join(w["zh_aliases"]), "body")
-
-        if w.get("pronounce_choices"):
-            sec("读音选项")
-            for i, c in enumerate(w["pronounce_choices"]):
-                ins(("✔ " if i == 0 else "· ") + c, "body")
-                if i < len(w["pronounce_choices"]) - 1:
-                    ins("\n", "body")
 
         rel = [m for m in (self.db.get("mcqs") or [])
                if w["term"].lower() in json.dumps(m, ensure_ascii=False).lower()]
