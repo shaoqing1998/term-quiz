@@ -541,6 +541,8 @@ class LibraryPage:
         b.create_tag("ipa", size=12 * Pango.SCALE, family="DejaVu Sans")
         b.create_tag("link", size=13 * Pango.SCALE, weight=Pango.Weight.BOLD,
                      foreground="#1c71d8", underline=Pango.Underline.SINGLE)
+        b.create_tag("action", size=11 * Pango.SCALE,
+                     foreground="#1c71d8", underline=Pango.Underline.SINGLE)
 
     # ---------------- 列表 ----------------
     def refresh_list(self) -> None:
@@ -642,7 +644,8 @@ class LibraryPage:
             start = b.get_char_count()
             if seg["zh"]:
                 ins(seg["text"], "link")
-                self._links.append({"start": start, "end": b.get_char_count(), **seg})
+                self._links.append({"start": start, "end": b.get_char_count(),
+                                    "kind": "word", **seg})
             else:
                 ins(seg["text"], "fullname")
             if i < len(segs) - 1:
@@ -674,20 +677,127 @@ class LibraryPage:
 
         rel = [m for m in (self.db.get("mcqs") or [])
                if w["term"].lower() in json.dumps(m, ensure_ascii=False).lower()]
+
+        def action_link(text: str, kind: str, payload) -> None:
+            ins("\n", "body")
+            start = b.get_char_count()
+            ins(text, "action")
+            self._links.append({"start": start, "end": b.get_char_count(),
+                                "kind": kind, "text": text, "payload": payload})
+
         if rel:
-            sec("相关题目")
-            for j, m in enumerate(rel):
-                ins(m["prompt"], "body")
-                ins("\n", "body")
-                for i, c in enumerate(m["choices"]):
-                    ins(("✔ " if i == 0 else "· ") + c, "muted")
-                    ins("\n", "body")
-                if m.get("explain"):
-                    ins(m["explain"], "muted")
-                if j < len(rel) - 1:
-                    ins("\n\n", "body")
+            action_link(f"▸ 相关题目（{len(rel)}）", "mcq", rel)
+
+        action_link(f"▸ 维基百科：{w.get('en_full') or w['term']}", "wiki",
+                    {"term": w["term"], "en_full": w.get("en_full") or w["term"]})
 
         self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
+
+
+    # ---------------- 相关题目弹窗 ----------------
+    def open_mcq_dialog(self, rel) -> None:
+        from gi.repository import Gtk
+
+        dlg = Gtk.Dialog(title="相关题目", transient_for=self.win.window, flags=0)
+        dlg.set_default_size(640, 540)
+        dlg.add_button("关闭", Gtk.ResponseType.CLOSE)
+
+        area = dlg.get_content_area()
+        area.set_spacing(10)
+        area.set_border_width(16)
+
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_margin_end(6)
+
+        for m in rel:
+            card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            card.get_style_context().add_class("card")
+            q = label("", True)
+            q.set_markup(f"<b>{pango_esc(m['prompt'])}</b>")
+            card.pack_start(q, False, False, 0)
+            for i, c in enumerate(m["choices"]):
+                row = label(("✔ " if i == 0 else "· ") + c, False)
+                if i == 0:
+                    row.get_style_context().add_class("right-answer")
+                card.pack_start(row, False, False, 0)
+            if m.get("explain"):
+                ex = label(m["explain"], False)
+                ex.get_style_context().add_class("muted")
+                card.pack_start(ex, False, False, 0)
+            box.pack_start(card, False, False, 0)
+
+        sw.add(box)
+        area.pack_start(sw, True, True, 0)
+        dlg.show_all()
+        dlg.run()
+        dlg.destroy()
+
+    # ---------------- 内嵌维基百科 ----------------
+    def open_wiki(self, term: str, en_full: str) -> None:
+        from urllib.parse import quote
+        from gi.repository import Gtk
+
+        zh = "https://zh.wikipedia.org/w/index.php?search=" + quote(en_full or term)
+        en = "https://en.wikipedia.org/w/index.php?search=" + quote(en_full or term)
+
+        dlg = Gtk.Dialog(title=f"维基百科 · {term}",
+                         transient_for=self.win.window, flags=0)
+        dlg.set_default_size(980, 720)
+        dlg.add_button("关闭", Gtk.ResponseType.CLOSE)
+        area = dlg.get_content_area()
+
+        view = None
+        try:
+            import gi
+            gi.require_version("WebKit2", "4.1")
+            from gi.repository import WebKit2
+            view = WebKit2.WebView()
+        except Exception:
+            view = None
+
+        bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        bar.set_margin_start(10)
+        bar.set_margin_end(10)
+        bar.set_margin_top(8)
+        bar.set_margin_bottom(6)
+
+        if view is not None:
+            b_zh = Gtk.Button(label="中文维基")
+            b_en = Gtk.Button(label="English")
+            b_br = Gtk.Button(label="用浏览器打开")
+            b_zh.connect("clicked", lambda *_: view.load_uri(zh))
+            b_en.connect("clicked", lambda *_: view.load_uri(en))
+            b_br.connect("clicked", lambda *_: Gtk.show_uri_on_window(
+                dlg, zh, Gtk.get_current_event_time()))
+            for b in (b_zh, b_en, b_br):
+                bar.pack_start(b, False, False, 0)
+            area.pack_start(bar, False, False, 0)
+            area.pack_start(view, True, True, 0)
+            view.load_uri(zh)
+
+            def _failed(_v, _ev, uri, err):
+                self.win.toast("维基加载失败，可能没有网络")
+                return False
+
+            view.connect("load-failed", _failed)
+        else:
+            info = Gtk.Label(xalign=0)
+            info.set_line_wrap(True)
+            info.set_margin_start(18)
+            info.set_margin_end(18)
+            info.set_margin_top(18)
+            info.set_text(
+                "系统里没有 WebKitGTK，无法内嵌网页。\n\n"
+                f"可以手动打开：\n{zh}\n\n"
+                "安装内嵌组件：\nsudo apt install gir1.2-webkit2-4.1"
+            )
+            area.pack_start(info, True, True, 0)
+
+        dlg.show_all()
+        dlg.run()
+        dlg.destroy()
 
     # ---------------- 点词弹气泡 ----------------
     def on_detail_press(self, tv, event):
@@ -710,6 +820,12 @@ class LibraryPage:
         off = it.get_offset()
         for link in self._links:
             if link["start"] <= off < link["end"]:
+                if link.get("kind") == "mcq":
+                    self.open_mcq_dialog(link["payload"])
+                    return True
+                if link.get("kind") == "wiki":
+                    self.open_wiki(link["payload"]["term"], link["payload"]["en_full"])
+                    return True
                 r = tv.get_iter_location(it)
                 wx, wy = tv.buffer_to_window_coords(Gtk.TextWindowType.WIDGET, r.x, r.y)
                 rect = Gdk.Rectangle()
@@ -1333,7 +1449,7 @@ class MainWindow:
         self._nav_rows = {}
         self._syncing_nav = False
         for page, title, icon in (
-            ("library", "题库", "view-list-symbolic"),
+            ("library", "词条", "view-list-symbolic"),
             ("quiz", "答题", "dialog-question-symbolic"),
             ("stats", "记录", "utilities-system-monitor-symbolic"),
         ):
@@ -1360,7 +1476,7 @@ class MainWindow:
         self.quiz = QuizPage(self)
         self.stats = StatsPage(self)
 
-        self.stack.add_titled(self.library.box, "library", "题库")
+        self.stack.add_titled(self.library.box, "library", "词条")
         self.stack.add_titled(self.quiz.box, "quiz", "答题")
         self.stack.add_titled(self.stats.widget, "stats", "记录")
         self._nav.select_row(self._nav_rows["library"])
