@@ -1,4 +1,4 @@
 __pycache__/
 *.pyc
-dist/
+dist/.stage/
 term_quiz.py.bak

@@ -5,12 +5,17 @@ set -euo pipefail
 
 REPO="shaoqing1998/term-quiz"
 VER="1.0.0"
-BASE="https://github.com/${REPO}/releases/download/v${VER}"
+REL="https://github.com/${REPO}/releases/download/v${VER}"
+RAW="https://raw.githubusercontent.com/${REPO}/main/dist"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 echo "下载 term-quiz ${VER} …"
-curl -fsSL "${BASE}/term-quiz-${VER}.tar.gz" -o "${TMP}/pkg.tgz"
+if ! curl -fsSL --connect-timeout 15 "${REL}/term-quiz-${VER}.tar.gz" -o "${TMP}/pkg.tgz" 2>/dev/null; then
+    echo "Release 下载失败，改用 raw 源…"
+    curl -fsSL --connect-timeout 15 "${RAW}/term-quiz-${VER}.tar.gz" -o "${TMP}/pkg.tgz"
+fi
+
 tar xzf "${TMP}/pkg.tgz" -C "${TMP}"
 bash "${TMP}/term-quiz-${VER}/install.sh"
