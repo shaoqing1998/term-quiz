@@ -883,10 +883,6 @@ class LibraryPage:
         sec("中文意思")
         ins(w.get("zh", "") or "—", "body")
 
-        if w.get("desc"):
-            sec("说明")
-            ins(w["desc"], "body")
-
         if w.get("pronounce"):
             sec("读法")
             raw = w["pronounce"]
@@ -921,6 +917,10 @@ class LibraryPage:
         if rel:
             action_link(f"▸ 相关题目（{len(rel)}）", "mcq", rel)
 
+
+        if w.get("desc"):
+            sec("说明")
+            ins(w["desc"], "body")
 
         self.detail.scroll_to_mark(b.get_insert(), 0, False, 0, 0)
 
