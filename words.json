@@ -1,9 +1,6 @@
 {
   "settings": {
-    "work_hours": [
-      9,
-      19
-    ],
+    "work_hours": [9, 19],
     "weekdays_only": true,
     "notify_expire_ms": 22000
   },
@@ -11,18 +8,9 @@
     {
       "term": "POC",
       "en_full": "Proof of Concept",
-      "en_aliases": [
-        "proof-of-concept",
-        "proof of concept"
-      ],
+      "en_aliases": ["proof-of-concept", "proof of concept"],
       "zh": "概念验证 / 样机验证",
-      "zh_aliases": [
-        "概念验证",
-        "样机验证",
-        "可行性验证",
-        "概念证实",
-        "验证原型"
-      ],
+      "zh_aliases": ["概念验证", "样机验证", "可行性验证", "概念证实", "验证原型"],
       "pronounce": "/pruːf əv ˈkɒnsept/（美音 /pruːf əv ˈkɑːnsept/）",
       "pronounce_accept": [
         "/pruːf əv ˈkɒnsept/",
@@ -34,36 +22,14 @@
         "/pɔɪnt əv ˈkɒntækt/",
         "/pɔːt əv kɔːl/",
         "/piːs əv keɪk/"
-      ],
-      "breakdown": [
-        [
-          "Proof",
-          "验证"
-        ],
-        [
-          "of",
-          "的"
-        ],
-        [
-          "Concept",
-          "概念"
-        ]
       ]
     },
     {
       "term": "OPS",
       "en_full": "Open Pluggable Specification",
-      "en_aliases": [
-        "open pluggable specification"
-      ],
+      "en_aliases": ["open pluggable specification"],
       "zh": "开放可插拔规范（商显/白板用的可插拔计算盒）",
-      "zh_aliases": [
-        "开放可插拔规范",
-        "可插拔计算盒",
-        "插拔式电脑",
-        "OPS盒子",
-        "开放即插规范"
-      ],
+      "zh_aliases": ["开放可插拔规范", "可插拔计算盒", "插拔式电脑", "OPS盒子", "开放即插规范"],
       "pronounce": "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/（美音 /ˈoʊpən …/）",
       "pronounce_accept": [
         "/ˈəʊpən ˈplʌɡəbl ˌspesɪfɪˈkeɪʃn/",
@@ -74,20 +40,6 @@
         "/ˌɒpəˈreɪʃnz/",
         "/ˈəʊpən pəˈzɪʃnɪŋ ˈsɪstəm/",
         "/ˈɒptɪkl ˈpækɪt swɪtʃ/"
-      ],
-      "breakdown": [
-        [
-          "Open",
-          "开放的"
-        ],
-        [
-          "Pluggable",
-          "可插拔的"
-        ],
-        [
-          "Specification",
-          "规范"
-        ]
       ]
     },
     {
@@ -118,20 +70,6 @@
         "/ˈsmaːs/",
         "/ˈsmɑːt ˈsɪrkɪt/",
         "/es em ˈɑːk/"
-      ],
-      "breakdown": [
-        [
-          "Smart",
-          "智能的"
-        ],
-        [
-          "Mobility",
-          "移动性"
-        ],
-        [
-          "ARChitecture",
-          "架构"
-        ]
       ]
     }
   ],
